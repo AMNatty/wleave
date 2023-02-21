@@ -3,7 +3,8 @@ name = "wleave"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-description = ""
+description = "A Wayland-native logout script written in Gtk3"
+repository = "https://github.com/AMNatty/wleave"
 
 [dependencies]
 clap = { version = "4.1", features = [ "derive" ] }

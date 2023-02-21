@@ -33,11 +33,11 @@ struct Args {
     buttons_per_row: u32,
 
     /// Set space between buttons columns
-    #[arg(short = 'c', long = "column-spacing", default_value_t = 0)]
+    #[arg(short = 'c', long = "column-spacing", default_value_t = 5)]
     column_spacing: u32,
 
     /// Set space between buttons rows
-    #[arg(short = 'r', long = "row-spacing", default_value_t = 0)]
+    #[arg(short = 'r', long = "row-spacing", default_value_t = 5)]
     row_spacing: u32,
 
     /// Set the margin around buttons
@@ -59,6 +59,10 @@ struct Args {
     /// Set the margin for the bottom of buttons
     #[arg(short = 'B', long)]
     margin_bottom: Option<i32>,
+
+    /// Close the menu on lost focus
+    #[arg(short = 'f', long)]
+    close_on_lost_focus: bool,
 
     /// Use layer-shell or xdg protocol
     #[arg(short = 'p', long, value_enum, default_value_t = Protocol::Xdg)]
@@ -106,6 +110,7 @@ struct AppConfig {
     row_spacing: u32,
     protocol: Protocol,
     buttons_per_row: u32,
+    close_on_lost_focus: bool,
     button_config: WButtonConfig,
 }
 
@@ -137,11 +142,12 @@ fn load_file_search<'b, S>(
         Path::new("/usr/local/etc/wleave"),
         Path::new("/usr/local/etc/wlogout"),
     ] {
-        if let Some(config) = load_func(&path.join(file_name))? {
-            eprintln!("File found in: {}", path.display());
+        let full_path = path.join(file_name);
+        if let Some(config) = load_func(&full_path)? {
+            eprintln!("File found in: {}", full_path.display());
             return Ok(config);
         } else {
-            eprintln!("No file found in: {}", path.display());
+            eprintln!("No file found in: {}", full_path.display());
         }
     }
 
@@ -254,10 +260,12 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
         }
     }
 
-    window.connect_focus_out_event(|window, _| {
-        window.close();
-        Inhibit(true)
-    });
+    if config.close_on_lost_focus {
+        window.connect_focus_out_event(|window, _| {
+            window.close();
+            Inhibit(false)
+        });
+    }
 
     let cfg = config.clone();
     window.connect_key_press_event(move |window, e| handle_key(&cfg, window, e));
@@ -324,10 +332,9 @@ fn main() {
         column_spacing: args.column_spacing,
         protocol: args.protocol,
         buttons_per_row: args.buttons_per_row,
+        close_on_lost_focus: args.close_on_lost_focus,
         button_config,
     });
-
-    println!("Config {config:#?}");
 
     let app = Application::builder()
         .application_id("sh.natty.Wleave")
