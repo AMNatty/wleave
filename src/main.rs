@@ -1,5 +1,5 @@
 use clap::{ArgAction, Parser, ValueEnum};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
 
@@ -107,12 +107,6 @@ struct AppConfig {
     protocol: Protocol,
     buttons_per_row: u32,
     button_config: WButtonConfig,
-}
-
-#[derive(Debug)]
-enum LoadError {
-    DoesNotExist,
-    Error(String),
 }
 
 fn load_file_search<'b, S>(
