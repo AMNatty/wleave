@@ -1,0 +1,15 @@
+[package]
+name = "wleave"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = ""
+
+[dependencies]
+clap = { version = "4.1", features = [ "derive" ] }
+dirs = "4.0"
+gtk = "0.16"
+gtk-layer-shell = "0.5"
+
+serde = { version = "1.0", features = [ "derive" ] }
+serde_json = "1.0"

@@ -1,0 +1,78 @@
+wleave(1)
+
+# NAME
+
+wleave - A Wayland logout menu
+
+# SYNOPSIS
+
+*wleave* [options] [command]
+
+# OPTIONS
+
+*-h, --help*
+	Show help message and stop
+
+*-l, --layout* <layout>
+	Specify a custom layout file
+
+*-v, --version*
+	Show version number and stop
+
+*-C, -css* <css>
+	Specify a custom css file
+
+*-b, --buttons-per-row* <num>
+	Set the number of buttons per row
+
+*-c, --column-spacing* <space>
+	Set space between buttons columns
+
+*-r, --row-spacing* <space>
+	Set space between buttons rows
+
+*-m, --margin* <padding>
+	Set margin on all sides
+
+*-L, --margin-left* <padding>
+	Set margin for left of buttons
+
+*-R, --margin-right* <padding>
+	Set margin for right of buttons
+
+*-T, --margin-right* <padding>
+	Set margin for top of buttons
+
+*-B, --margin-right* <padding>
+	Set margin for bottom of buttons
+
+*-p, --protocol* <protocol>
+	Takes either layer-shell or xdg. The layer-shell allows transparency effects; however, only a few compositors correctly support it. The xdg protocol will work on almost all compositors, but does not allow for transparency.
+
+# DESCRIPTION
+
+wleave is a Wayland-native logout script. It is a modern rewrite of Wlogout and a drop-in replacement.
+
+# CONFIGURATION
+
+wleave searches for a layout and style.css file in the following locations, in this order:
+
+. $XDG_CONFIG_HOME/wleave/
+. $XDG_CONFIG_HOME/wlogout/
+. /etc/wleave/
+. /etc/wlogout/
+. /usr/local/etc/wleave
+. /usr/local/etc/wlogout
+
+If unset, $XDG_CONFIG_HOME defaults to *~/.config/*.
+
+An error is raised when no layout file is found; However, the style.css file is optional. If you would like to customise either it is recommended that you copy the defaults from */etc/wleave/* into  *~/.config* and make any changes there.
+
+# AUTHORS
+
+Based on Wlogout by Haden Collins <collinshaden@gmail.com>. For more information about wlogout, see <https://github.com/ArtsyMacaw/wlogout>.
+Rewrite by Natty <natty.sh.git@gmail.com>, see <https://github.com/AMNatty/wleave>.
+
+# SEE ALSO
+
+*wleave*(5)
