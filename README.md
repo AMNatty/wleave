@@ -5,6 +5,11 @@ Basically a fork of [wlogout](https://github.com/ArtsyMacaw/wlogout), rewritten 
 
 **wleave** is compatible with **wlogout** configuration files.
 
+## Usage
+
+The command line options are identical to **wlogout**.
+See `--help` for a list of options.
+
 ## Help, how do I close the menu
 
 The `<Esc>` key closes the menu, an option to change this may be added eventually.
