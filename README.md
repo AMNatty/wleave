@@ -25,9 +25,11 @@ Dependencies:
 * gtk3
 * a stable version of the Rust toolchain
 
+You can run the application using `cargo run --release` or GNU make:
 
 ```shell
 make
+./target/release/wleave
 ```
 
 ## Usage
