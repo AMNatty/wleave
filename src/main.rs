@@ -114,10 +114,10 @@ struct AppConfig {
     button_config: WButtonConfig,
 }
 
-fn load_file_search<'b, S>(
-    given_file: Option<&'b str>,
+fn load_file_search<S>(
+    given_file: Option<&str>,
     file_name: &impl AsRef<Path>,
-    load_func: impl Fn(&(dyn AsRef<Path> + 'b)) -> Result<Option<S>, String>,
+    load_func: impl Fn(&dyn AsRef<Path>) -> Result<Option<S>, String>,
 ) -> Result<S, String> {
     if let Some(given_file) = given_file {
         return match load_func(&given_file) {
@@ -154,9 +154,7 @@ fn load_file_search<'b, S>(
     Err(format!("No {} file found!", file_name.as_ref().display()))
 }
 
-fn load_config_from_file(
-    path: &(impl AsRef<Path> + ?Sized),
-) -> Result<Option<WButtonConfig>, String> {
+fn load_config_from_file(path: &dyn AsRef<Path>) -> Result<Option<WButtonConfig>, String> {
     if !path.as_ref().is_file() {
         return Ok(None);
     }
@@ -183,7 +181,7 @@ fn load_config(file: Option<&str>) -> Result<WButtonConfig, String> {
     load_file_search(file, &"layout", load_config_from_file)
 }
 
-fn load_css_from_file(path: &(impl AsRef<Path> + ?Sized)) -> Result<Option<CssProvider>, String> {
+fn load_css_from_file(path: &dyn AsRef<Path>) -> Result<Option<CssProvider>, String> {
     if !path.as_ref().is_file() {
         return Ok(None);
     }
