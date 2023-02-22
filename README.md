@@ -1,9 +1,34 @@
 # wleave
+![AUR version](https://img.shields.io/aur/version/wleave-git) 
+![GitHub](https://img.shields.io/github/license/AMNatty/wleave)
+
 A Wayland-native logout script written in Gtk3
 
 Basically a fork of [wlogout](https://github.com/ArtsyMacaw/wlogout), rewritten in Rust.
 
 **wleave** is compatible with **wlogout** configuration files.
+
+## Installation
+
+### Arch Linux
+
+**wleave** can be installed from the **AUR**:
+
+```shell
+paru -S wleave-git
+```
+
+### Building from sources
+
+Dependencies:
+* gtk-layer-shell
+* gtk3
+* a stable version of the Rust toolchain
+
+
+```shell
+make
+```
 
 ## Usage
 
