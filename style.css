@@ -13,7 +13,6 @@ button {
 	border-width: 2px;
 	background-repeat: no-repeat;
 	background-position: center;
-	background-size: 25%;
 }
 
 button:focus, button:active, button:hover {
@@ -22,25 +21,25 @@ button:focus, button:active, button:hover {
 }
 
 #lock {
-    background-image: image(url("/usr/share/wleave/icons/lock.png"), url("/usr/local/share/wleave/icons/lock.png"));
+    background-image: image(url("/usr/share/wleave/icons/lock.svg"), url("/usr/local/share/wleave/icons/lock.svg"));
 }
 
 #logout {
-    background-image: image(url("/usr/share/wleave/icons/logout.png"), url("/usr/local/share/wleave/icons/logout.png"));
+    background-image: image(url("/usr/share/wleave/icons/logout.svg"), url("/usr/local/share/wleave/icons/logout.svg"));
 }
 
 #suspend {
-    background-image: image(url("/usr/share/wleave/icons/suspend.png"), url("/usr/local/share/wleave/icons/suspend.png"));
+    background-image: image(url("/usr/share/wleave/icons/suspend.svg"), url("/usr/local/share/wleave/icons/suspend.svg"));
 }
 
 #hibernate {
-    background-image: image(url("/usr/share/wleave/icons/hibernate.png"), url("/usr/local/share/wleave/icons/hibernate.png"));
+    background-image: image(url("/usr/share/wleave/icons/hibernate.svg"), url("/usr/local/share/wleave/icons/hibernate.svg"));
 }
 
 #shutdown {
-    background-image: image(url("/usr/share/wleave/icons/shutdown.png"), url("/usr/local/share/wleave/icons/shutdown.png"));
+    background-image: image(url("/usr/share/wleave/icons/shutdown.svg"), url("/usr/local/share/wleave/icons/shutdown.svg"));
 }
 
 #reboot {
-    background-image: image(url("/usr/share/wleave/icons/reboot.png"), url("/usr/local/share/wleave/icons/reboot.png"));
+    background-image: image(url("/usr/share/wleave/icons/reboot.svg"), url("/usr/local/share/wleave/icons/reboot.svg"));
 }
