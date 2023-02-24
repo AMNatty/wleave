@@ -47,7 +47,8 @@ See <https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/keynames.txt> for a 
 
 ## Enhancements
 
-* Autoclose on when window focus is lost (the `-f/--close-on-lost-focus` flag)
+* Autoclose when window focus is lost (the `-f/--close-on-lost-focus` flag)
+* Mnemonic labels (the `-k/--show-keybinds` flag)
 * Pretty gaps by default
 * Less error-prone
 * Keybinds accept modifier keys and Unicode characters
