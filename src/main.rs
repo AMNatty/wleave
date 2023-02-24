@@ -1,4 +1,4 @@
-use clap::{ArgAction, Parser, ValueEnum};
+use clap::Parser;
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
@@ -7,67 +7,7 @@ use gtk::gdk::{keys, EventKey, Screen};
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, CssProvider, Label, StyleContext};
 use serde::Deserialize;
-
-#[derive(Debug, Copy, Clone, ValueEnum)]
-enum Protocol {
-    LayerShell,
-    Xdg,
-}
-
-#[derive(Parser, Debug)]
-#[command(author, version, disable_version_flag = true, about, long_about = None)]
-struct Args {
-    #[arg(short = 'v', long, action = ArgAction::Version)]
-    version: Option<bool>,
-
-    /// Specify a layout file
-    #[arg(short = 'l', long)]
-    layout: Option<String>,
-
-    /// Specify a custom CSS file
-    #[arg(short = 'C', long)]
-    css: Option<String>,
-
-    /// Set the number of buttons per row
-    #[arg(short = 'b', long = "buttons-per-row", default_value_t = 3)]
-    buttons_per_row: u32,
-
-    /// Set space between buttons columns
-    #[arg(short = 'c', long = "column-spacing", default_value_t = 5)]
-    column_spacing: u32,
-
-    /// Set space between buttons rows
-    #[arg(short = 'r', long = "row-spacing", default_value_t = 5)]
-    row_spacing: u32,
-
-    /// Set the margin around buttons
-    #[arg(short = 'm', long, default_value_t = 230)]
-    margin: i32,
-
-    /// Set margin for the left of buttons
-    #[arg(short = 'L', long)]
-    margin_left: Option<i32>,
-
-    /// Set margin for the right of buttons
-    #[arg(short = 'R', long)]
-    margin_right: Option<i32>,
-
-    /// Set margin for the top of buttons
-    #[arg(short = 'T', long)]
-    margin_top: Option<i32>,
-
-    /// Set the margin for the bottom of buttons
-    #[arg(short = 'B', long)]
-    margin_bottom: Option<i32>,
-
-    /// Close the menu on lost focus
-    #[arg(short = 'f', long)]
-    close_on_lost_focus: bool,
-
-    /// Use layer-shell or xdg protocol
-    #[arg(short = 'p', long, value_enum, default_value_t = Protocol::Xdg)]
-    protocol: Protocol,
-}
+use wleave::cli_opt::{Args, Protocol};
 
 #[derive(Debug)]
 struct WButtonConfig {
@@ -112,17 +52,21 @@ struct AppConfig {
     buttons_per_row: u32,
     close_on_lost_focus: bool,
     button_config: WButtonConfig,
+    show_keybinds: bool,
 }
 
 fn load_file_search<S>(
-    given_file: Option<&str>,
+    given_file: Option<&impl AsRef<Path>>,
     file_name: &impl AsRef<Path>,
     load_func: impl Fn(&dyn AsRef<Path>) -> Result<Option<S>, String>,
 ) -> Result<S, String> {
     if let Some(given_file) = given_file {
         return match load_func(&given_file) {
             Ok(Some(config)) => Ok(config),
-            Ok(None) => Err(format!("Failed to load {given_file}: File does not exist")),
+            Ok(None) => Err(format!(
+                "Failed to load {}: File does not exist",
+                given_file.as_ref().display()
+            )),
             Err(e) => Err(e),
         };
     }
@@ -177,7 +121,7 @@ fn load_config_from_file(path: &dyn AsRef<Path>) -> Result<Option<WButtonConfig>
     }
 }
 
-fn load_config(file: Option<&str>) -> Result<WButtonConfig, String> {
+fn load_config(file: Option<&impl AsRef<Path>>) -> Result<WButtonConfig, String> {
     load_file_search(file, &"layout", load_config_from_file)
 }
 
@@ -196,7 +140,7 @@ fn load_css_from_file(path: &dyn AsRef<Path>) -> Result<Option<CssProvider>, Str
     Ok(Some(provider))
 }
 
-fn load_css(file: Option<&str>) -> Result<CssProvider, String> {
+fn load_css(file: Option<&impl AsRef<Path>>) -> Result<CssProvider, String> {
     load_file_search(file, &"style.css", load_css_from_file)
 }
 
@@ -280,8 +224,14 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
     grid.set_margin_end(config.margin_right);
 
     for (i, bttn) in config.button_config.buttons.iter().enumerate() {
+        let label = if config.show_keybinds {
+            format!("{} [{}]", bttn.text, bttn.keybind)
+        } else {
+            bttn.text.to_owned()
+        };
+
         let button = gtk::Button::builder()
-            .label(&bttn.text)
+            .label(&label)
             .name(&bttn.label)
             .hexpand(true)
             .vexpand(true)
@@ -313,7 +263,7 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
 fn main() {
     let args = Args::parse();
 
-    let button_config = match load_config(args.layout.as_ref().map(String::as_ref)) {
+    let button_config = match load_config(args.layout.as_ref()) {
         Ok(cfg) => cfg,
         Err(e) => {
             eprintln!("Failed to load config: {e}");
@@ -331,6 +281,7 @@ fn main() {
         protocol: args.protocol,
         buttons_per_row: args.buttons_per_row,
         close_on_lost_focus: args.close_on_lost_focus,
+        show_keybinds: args.show_keybinds,
         button_config,
     });
 
@@ -338,16 +289,14 @@ fn main() {
         .application_id("sh.natty.Wleave")
         .build();
 
-    app.connect_startup(
-        move |_| match load_css(args.css.as_ref().map(String::as_ref)) {
-            Ok(css) => StyleContext::add_provider_for_screen(
-                &Screen::default().expect("Could not connect to a display."),
-                &css,
-                gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
-            ),
-            Err(e) => eprintln!("Failed to load CSS: {e}"),
-        },
-    );
+    app.connect_startup(move |_| match load_css(args.css.as_ref()) {
+        Ok(css) => StyleContext::add_provider_for_screen(
+            &Screen::default().expect("Could not connect to a display."),
+            &css,
+            gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+        ),
+        Err(e) => eprintln!("Failed to load CSS: {e}"),
+    });
 
     app.connect_activate(move |app| app_main(&config, app));
 

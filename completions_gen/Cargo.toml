@@ -1,0 +1,9 @@
+[package]
+name = "wleave_completions"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap_complete = "4.1"
+clap = "4.1"
+wleave = { path = ".." }

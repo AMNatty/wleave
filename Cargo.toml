@@ -6,8 +6,12 @@ license = "MIT"
 description = "A Wayland-native logout script written in Gtk3"
 repository = "https://github.com/AMNatty/wleave"
 
+[workspace]
+members = [".", "completions_gen"]
+
 [dependencies]
 clap = { version = "4.1", features = [ "derive" ] }
+
 dirs = "4.0"
 gtk = "0.16"
 gtk-layer-shell = "0.5"

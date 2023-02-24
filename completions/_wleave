@@ -1,16 +1,57 @@
 #compdef wleave
 
-_arguments -s \
-        '(-h --help)'{-h,--help}'[Show help message and stop]' \
-	    '(-v --version)'{-v,--version}'[Show the version number and stop]' \
-        '(-l --layout)'{-l,--layout}'[Specify a config file]:files:_files' \
-        '(-C --css)'{-C,--css}'[Specify a css file]:files:_files' \
-	    '(-b --buttons-per-row)'{-b,--buttons-per-row}'[Set the number of buttons per row]:number:()' \
-        '(-c --column-spacing)'{-c,--column-spacing}'[Set space between buttons columns]:space:()' \
-        '(-r --row-spacing)'{-r,--row-spacing}'[Set space between buttons rows]:space:()' \
-	    '(-m --margin)'{-m,--margin}'[Set margin around buttons]:padding:()' \
-	    '(-L --margin-left)'{-L,--margin-left}'[Set margin for left of buttons]:padding:()' \
-        '(-R --margin-right)'{-R,--margin-right}'[Set margin for right of buttons]:padding:()' \
-        '(-T --margin-top)'{-T,--margin-top}'[Set margin for top of buttons]:padding:()' \
-        '(-B --margin-bottom)'{-B,--margin-bottom}'[Set margin for bottom of buttons]:padding:()' \
-        '(-p --protocol)'{-p,--protocol}'[Use layer-shell or xdg protocol]:protocol:()'
+autoload -U is-at-least
+
+_wleave() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" \
+'-l+[Specify a layout file]:LAYOUT:_files' \
+'--layout=[Specify a layout file]:LAYOUT:_files' \
+'-C+[Specify a custom CSS file]:CSS:_files' \
+'--css=[Specify a custom CSS file]:CSS:_files' \
+'-b+[Set the number of buttons per row]:BUTTONS_PER_ROW: ' \
+'--buttons-per-row=[Set the number of buttons per row]:BUTTONS_PER_ROW: ' \
+'-c+[Set space between buttons columns]:COLUMN_SPACING: ' \
+'--column-spacing=[Set space between buttons columns]:COLUMN_SPACING: ' \
+'-r+[Set space between buttons rows]:ROW_SPACING: ' \
+'--row-spacing=[Set space between buttons rows]:ROW_SPACING: ' \
+'-m+[Set the margin around buttons]:MARGIN: ' \
+'--margin=[Set the margin around buttons]:MARGIN: ' \
+'-L+[Set margin for the left of buttons]:MARGIN_LEFT: ' \
+'--margin-left=[Set margin for the left of buttons]:MARGIN_LEFT: ' \
+'-R+[Set margin for the right of buttons]:MARGIN_RIGHT: ' \
+'--margin-right=[Set margin for the right of buttons]:MARGIN_RIGHT: ' \
+'-T+[Set margin for the top of buttons]:MARGIN_TOP: ' \
+'--margin-top=[Set margin for the top of buttons]:MARGIN_TOP: ' \
+'-B+[Set the margin for the bottom of buttons]:MARGIN_BOTTOM: ' \
+'--margin-bottom=[Set the margin for the bottom of buttons]:MARGIN_BOTTOM: ' \
+'-p+[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
+'--protocol=[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
+'-v[]' \
+'--version[]' \
+'-f[Close the menu on lost focus]' \
+'--close-on-lost-focus[Close the menu on lost focus]' \
+'-k[Show the associated key binds]' \
+'--show-keybinds[Show the associated key binds]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+}
+
+(( $+functions[_wleave_commands] )) ||
+_wleave_commands() {
+    local commands; commands=()
+    _describe -t commands 'wleave commands' commands "$@"
+}
+
+_wleave "$@"

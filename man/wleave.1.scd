@@ -46,6 +46,15 @@ wleave - A Wayland logout menu
 *-B, --margin-right* <padding>
 	Set margin for bottom of buttons
 
+*-B, --margin-right* <padding>
+	Set margin for bottom of buttons
+
+*-f, --close-on-lost-focus*
+	Closes the menu if focus is lost
+
+*-k, --show-keybinds*
+	Show the associated key binds for each button
+
 *-p, --protocol* <protocol>
 	Takes either layer-shell or xdg. The layer-shell allows transparency effects; however, only a few compositors correctly support it. The xdg protocol will work on almost all compositors, but does not allow for transparency.
 
