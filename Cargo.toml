@@ -1,6 +1,6 @@
 [package]
 name = "wleave"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 description = "A Wayland-native logout script written in Gtk3"
