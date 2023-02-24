@@ -47,6 +47,7 @@ See <https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/keynames.txt> for a 
 
 ## Enhancements
 
+* New pretty icons by [@earth-walker](https://github.com/earth-walker)
 * Autoclose when window focus is lost (the `-f/--close-on-lost-focus` flag)
 * Mnemonic labels (the `-k/--show-keybinds` flag)
 * Pretty gaps by default
