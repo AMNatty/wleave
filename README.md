@@ -8,6 +8,8 @@ Basically a fork of [wlogout](https://github.com/ArtsyMacaw/wlogout), rewritten 
 
 **wleave** is compatible with **wlogout** configuration files.
 
+![The default Wleave menu look](example.png)
+
 ## Installation
 
 ### Arch Linux
