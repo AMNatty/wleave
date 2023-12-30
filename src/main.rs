@@ -4,8 +4,10 @@ use std::process::Command;
 use std::sync::Arc;
 
 use gtk::gdk::{keys, EventKey, Screen};
+use gtk::glib::Propagation;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, CssProvider, Label, StyleContext};
+use gtk::{gio, Application, ApplicationWindow, CssProvider, Label, StyleContext};
+use gtk_layer_shell::LayerShell;
 use serde::Deserialize;
 use wleave::cli_opt::{Args, Protocol};
 
@@ -150,7 +152,7 @@ fn run_command(command: &str) {
     }
 }
 
-fn handle_key(config: &Arc<AppConfig>, window: &ApplicationWindow, e: &EventKey) -> Inhibit {
+fn handle_key(config: &Arc<AppConfig>, window: &ApplicationWindow, e: &EventKey) -> Propagation {
     match e.keyval() {
         keys::constants::Escape => {
             window.close();
@@ -176,7 +178,7 @@ fn handle_key(config: &Arc<AppConfig>, window: &ApplicationWindow, e: &EventKey)
         }
     }
 
-    Inhibit(false)
+    Propagation::Stop
 }
 
 fn app_main(config: &Arc<AppConfig>, app: &Application) {
@@ -187,15 +189,15 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
 
     match config.protocol {
         Protocol::LayerShell => {
-            gtk_layer_shell::init_for_window(&window);
-            gtk_layer_shell::set_layer(&window, gtk_layer_shell::Layer::Overlay);
-            gtk_layer_shell::set_exclusive_zone(&window, -1);
-            gtk_layer_shell::set_keyboard_interactivity(&window, true);
+            window.init_layer_shell();
+            window.set_layer(gtk_layer_shell::Layer::Overlay);
+            window.set_exclusive_zone(-1);
+            window.set_keyboard_interactivity(true);
 
-            gtk_layer_shell::set_anchor(&window, gtk_layer_shell::Edge::Left, true);
-            gtk_layer_shell::set_anchor(&window, gtk_layer_shell::Edge::Right, true);
-            gtk_layer_shell::set_anchor(&window, gtk_layer_shell::Edge::Top, true);
-            gtk_layer_shell::set_anchor(&window, gtk_layer_shell::Edge::Bottom, true);
+            window.set_anchor(gtk_layer_shell::Edge::Left, true);
+            window.set_anchor(gtk_layer_shell::Edge::Right, true);
+            window.set_anchor(gtk_layer_shell::Edge::Top, true);
+            window.set_anchor(gtk_layer_shell::Edge::Bottom, true);
         }
         Protocol::Xdg => {
             window.fullscreen();
@@ -205,7 +207,7 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
     if config.close_on_lost_focus {
         window.connect_focus_out_event(|window, _| {
             window.close();
-            Inhibit(false)
+            Propagation::Proceed
         });
     }
 

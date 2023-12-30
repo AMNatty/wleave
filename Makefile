@@ -1,4 +1,4 @@
-./target/release/wleave: src/**.rs
+./target/release/wleave: $(wildcard src/**.rs)
 	cargo build --frozen --release --all-features
 
 .PHONY: wleave
