@@ -132,12 +132,9 @@ fn load_css_from_file(path: &dyn AsRef<Path>) -> Result<Option<CssProvider>, Str
         return Ok(None);
     }
 
-    let css_data =
-        std::fs::read_to_string(path).map_err(|e| format!("Failed to read CSS file: {e}"))?;
-
     let provider = CssProvider::new();
     provider
-        .load_from_data(css_data.as_ref())
+        .load_from_file(&gio::File::for_path(path))
         .map_err(|e| format!("Failed to load CSS: {e}"))?;
     Ok(Some(provider))
 }
