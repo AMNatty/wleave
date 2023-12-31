@@ -175,7 +175,7 @@ fn handle_key(config: &Arc<AppConfig>, window: &ApplicationWindow, e: &EventKey)
         }
     }
 
-    Propagation::Stop
+    Propagation::Proceed
 }
 
 fn app_main(config: &Arc<AppConfig>, app: &Application) {
