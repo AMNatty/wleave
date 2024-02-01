@@ -188,6 +188,7 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
         Protocol::LayerShell => {
             window.init_layer_shell();
             window.set_layer(gtk_layer_shell::Layer::Overlay);
+            window.set_namespace("wleave");
             window.set_exclusive_zone(-1);
             window.set_keyboard_interactivity(true);
 
