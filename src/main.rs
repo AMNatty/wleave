@@ -22,12 +22,18 @@ struct WButton {
     action: String,
     text: String,
     keybind: String,
+    #[serde(default = "default_justify")]
+    justify: String,
     #[serde(default = "default_width")]
     width: f32,
     #[serde(default = "default_height")]
     height: f32,
     #[serde(default = "default_circular")]
     circular: bool,
+}
+
+fn default_justify() -> String {
+    String::from("center")
 }
 
 fn default_width() -> f32 {
@@ -230,6 +236,14 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
             bttn.text.to_owned()
         };
 
+        let justify = match bttn.justify.as_str() {
+            "center" => gtk::Justification::Center,
+            "fill" => gtk::Justification::Fill,
+            "left" => gtk::Justification::Left,
+            "right" => gtk::Justification::Right,
+            _ => gtk::Justification::Center
+        };
+
         let button = gtk::Button::builder()
             .label(&label)
             .name(&bttn.label)
@@ -241,6 +255,8 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
             if let Some(label) = label.downcast_ref::<Label>() {
                 label.set_xalign(bttn.width);
                 label.set_yalign(bttn.height);
+                label.set_use_markup(true);
+                label.set_justify(justify);
             }
         }
 
