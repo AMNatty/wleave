@@ -241,7 +241,7 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
             "fill" => gtk::Justification::Fill,
             "left" => gtk::Justification::Left,
             "right" => gtk::Justification::Right,
-            _ => gtk::Justification::Center
+            _ => gtk::Justification::Center,
         };
 
         let button = gtk::Button::builder()
