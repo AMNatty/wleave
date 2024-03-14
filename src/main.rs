@@ -2,9 +2,10 @@ use clap::Parser;
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
+use std::time::Duration;
 
 use gtk::gdk::{keys, EventKey, Screen};
-use gtk::glib::Propagation;
+use gtk::glib::{timeout_add_local_once, Propagation};
 use gtk::prelude::*;
 use gtk::{gio, Application, ApplicationWindow, CssProvider, Label, StyleContext};
 use gtk_layer_shell::LayerShell;
@@ -56,6 +57,7 @@ struct AppConfig {
     margin_bottom: i32,
     column_spacing: u32,
     row_spacing: u32,
+    delay_ms: u32,
     protocol: Protocol,
     buttons_per_row: u32,
     close_on_lost_focus: bool,
@@ -155,6 +157,19 @@ fn run_command(command: &str) {
     }
 }
 
+fn on_option(command: &str, delay_ms: u32, window: ApplicationWindow) {
+    let state_inner = (command.to_owned(), window.clone());
+    window.connect_hide(move |_| {
+        let state_timer = state_inner.clone();
+        timeout_add_local_once(Duration::from_millis(delay_ms.into()), move || {
+            let (ref action, ref window_handle) = state_timer;
+            run_command(action);
+            window_handle.close();
+        });
+    });
+    window.hide();
+}
+
 fn handle_key(config: &Arc<AppConfig>, window: &ApplicationWindow, e: &EventKey) -> Propagation {
     match e.keyval() {
         keys::constants::Escape => {
@@ -174,8 +189,8 @@ fn handle_key(config: &Arc<AppConfig>, window: &ApplicationWindow, e: &EventKey)
                     .find(|b| b.keybind == *key_name);
 
                 if let Some(WButton { action, .. }) = button {
-                    run_command(action);
-                    window.close();
+                    let state_action = action.clone();
+                    on_option(&state_action, config.delay_ms, window.clone());
                 }
             }
         }
@@ -264,8 +279,10 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
             button.style_context().add_class("circular");
         }
 
-        let action = bttn.action.clone();
-        button.connect_clicked(move |_| run_command(&action));
+        let window_handle = window.clone();
+        let delay_ms = config.delay_ms;
+        let state_action = bttn.action.clone();
+        button.connect_clicked(move |_| on_option(&state_action, delay_ms, window_handle.clone()));
 
         let x = i as u32 % config.buttons_per_row;
         let y = i as u32 / config.buttons_per_row;
@@ -299,6 +316,7 @@ fn main() {
         close_on_lost_focus: args.close_on_lost_focus,
         show_keybinds: args.show_keybinds,
         button_config,
+        delay_ms: args.delay_command_ms,
     });
 
     let app = Application::builder()

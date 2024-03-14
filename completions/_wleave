@@ -35,6 +35,8 @@ _wleave() {
 '--margin-top=[Set margin for the top of buttons]:MARGIN_TOP: ' \
 '-B+[Set the margin for the bottom of buttons]:MARGIN_BOTTOM: ' \
 '--margin-bottom=[Set the margin for the bottom of buttons]:MARGIN_BOTTOM: ' \
+'-d+[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS: ' \
+'--delay-command-ms=[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS: ' \
 '-p+[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
 '--protocol=[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
 '-v[]' \

@@ -53,6 +53,10 @@ pub struct Args {
     #[arg(short = 'B', long)]
     pub margin_bottom: Option<i32>,
 
+    /// The delay (in milliseconds) between the window closing and executing the selected option
+    #[arg(short = 'd', long, default_value_t = 100)]
+    pub delay_command_ms: u32,
+
     /// Close the menu on lost focus
     #[arg(short = 'f', long)]
     pub close_on_lost_focus: bool,
