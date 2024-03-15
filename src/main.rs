@@ -225,7 +225,10 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
 
     if config.close_on_lost_focus {
         window.connect_focus_out_event(|window, _| {
-            window.close();
+            if window.is_visible() {
+                window.close();
+            }
+
             Propagation::Proceed
         });
     }
