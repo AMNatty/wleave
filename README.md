@@ -33,6 +33,17 @@ You can run the application using `cargo run --release` or GNU make:
 make
 ./target/release/wleave
 ```
+Install it:
+
+```shell
+make all
+cargo install --path .
+```
+
+Directory `.cargo/bin` must be in the PATH enviroment variable.
+```shell
+  $env.PATH = ($env.PATH | split row (char esep) | prepend '~/.cargo/bin')
+```
 
 ## Usage
 
