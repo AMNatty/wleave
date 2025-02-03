@@ -1,6 +1,6 @@
 [package]
 name = "wleave"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 license = "MIT"
 description = "A Wayland-native logout script written in Gtk3"
@@ -12,7 +12,10 @@ members = [".", "completions_gen"]
 [dependencies]
 clap = { version = "4.1", features = ["derive"] }
 
-dirs = "5.0"
+thiserror = "2"
+miette = { version = "7", features = ["derive", "fancy"] }
+
+dirs = "6.0"
 gtk = "0.18"
 gtk-layer-shell = "0.8"
 

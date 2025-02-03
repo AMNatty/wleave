@@ -1,5 +1,6 @@
 use clap::Parser;
-use std::path::Path;
+use miette::{Diagnostic, NamedSource, Report, SourceOffset};
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
@@ -10,9 +11,10 @@ use gtk::prelude::*;
 use gtk::{gio, Application, ApplicationWindow, CssProvider, Label, StyleContext};
 use gtk_layer_shell::LayerShell;
 use serde::Deserialize;
+use thiserror::Error;
 use wleave::cli_opt::{Args, Protocol};
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 struct WButtonConfig {
     buttons: Vec<WButton>,
 }
@@ -65,90 +67,105 @@ struct AppConfig {
     show_keybinds: bool,
 }
 
-fn load_file_search<S>(
-    given_file: Option<&impl AsRef<Path>>,
-    file_name: &impl AsRef<Path>,
-    load_func: impl Fn(&dyn AsRef<Path>) -> Result<Option<S>, String>,
-) -> Result<S, String> {
-    if let Some(given_file) = given_file {
-        return match load_func(&given_file) {
-            Ok(Some(config)) => Ok(config),
-            Ok(None) => Err(format!(
-                "Failed to load {}: File does not exist",
-                given_file.as_ref().display()
-            )),
-            Err(e) => Err(e),
-        };
+#[derive(Error, Diagnostic, Debug)]
+pub enum WError {
+    #[error("Failed to load the specified configuration file {0} as it does not exist")]
+    SpecifiedPathNotAFile(PathBuf),
+    #[error("Failed to find the configuration file {0} in the search path")]
+    FileNotInSearchPath(PathBuf),
+    #[error("An error has occurred while reading file {0}: {1}")]
+    IoError(PathBuf, std::io::Error),
+    #[error("JSON parsing failed")]
+    #[diagnostic(code(wleave::parse_failed))]
+    FileParseFailed(
+        #[source_code] NamedSource<String>,
+        #[label("The parser failed here")] SourceOffset,
+        #[source] serde_json::Error,
+    ),
+    #[error("Failed to load CSS from file {0}: {1}")]
+    CssReadError(PathBuf, gtk::glib::Error),
+}
+
+fn file_search_given(given_file: impl AsRef<Path>) -> Result<PathBuf, WError> {
+    let file = given_file.as_ref();
+    if !file.is_file() {
+        return Err(WError::SpecifiedPathNotAFile(file.to_owned()));
     }
 
-    let user_config_dir = dirs::config_dir().unwrap_or_else(|| {
-        dirs::home_dir().map_or_else(|| Path::new("~/.config").to_owned(), |p| p.join(".config"))
-    });
+    Ok(file.to_owned())
+}
 
-    let user_css_path = user_config_dir.join("wleave");
-    let user_css_path_compat = user_config_dir.join("wlogout");
+fn file_search_path(file_name: impl AsRef<Path>) -> Result<PathBuf, WError> {
+    let file_name = file_name.as_ref();
+    let user_config_dir = dirs::config_dir()
+        .or_else(|| dirs::home_dir().map(|p| p.join(".config")))
+        .unwrap_or_else(|| Path::new("~/.config").to_owned());
 
     for path in &[
-        user_css_path.as_ref(),
-        user_css_path_compat.as_ref(),
+        &user_config_dir.join("wleave"),
+        &user_config_dir.join("wlogout"),
         Path::new("/etc/wleave"),
         Path::new("/etc/wlogout"),
         Path::new("/usr/local/etc/wleave"),
         Path::new("/usr/local/etc/wlogout"),
     ] {
         let full_path = path.join(file_name);
-        if let Some(config) = load_func(&full_path)? {
+        if full_path.is_file() {
             eprintln!("File found in: {}", full_path.display());
-            return Ok(config);
+            return Ok(full_path);
         } else {
             eprintln!("No file found in: {}", full_path.display());
         }
     }
 
-    Err(format!("No {} file found!", file_name.as_ref().display()))
+    Err(WError::FileNotInSearchPath(file_name.to_owned()))
 }
 
-fn load_config_from_file(path: &dyn AsRef<Path>) -> Result<Option<WButtonConfig>, String> {
-    if !path.as_ref().is_file() {
-        return Ok(None);
-    }
+fn load_config(file: Option<&impl AsRef<Path>>) -> Result<WButtonConfig, WError> {
+    let path = file.map(file_search_given).unwrap_or_else(|| {
+        file_search_path("layout.json").or_else(|_| file_search_path("layout"))
+    })?;
 
-    let file = std::fs::File::open(path)
-        .map_err(|e| format!("Failed to open file {}: {e}", path.as_ref().display()))?;
+    let config = std::fs::read_to_string(&path).map_err(|e| WError::IoError(path.clone(), e))?;
 
-    let reader = std::io::BufReader::new(file);
-
-    let mut buttons = Vec::new();
-
-    let mut de = serde_json::Deserializer::from_reader(reader);
-
-    loop {
-        match WButton::deserialize(&mut de) {
-            Ok(button) => buttons.push(button),
-            Err(e) if e.is_eof() => break Ok(Some(WButtonConfig { buttons })),
-            Err(e) => break Err(format!("Parsing failed: {e}")),
+    match serde_json::de::from_str::<WButtonConfig>(&config) {
+        Ok(conf) => return Ok(conf),
+        Err(e) => {
+            eprintln!(
+                "{:?}",
+                Report::from(WError::FileParseFailed(
+                    NamedSource::new(path.display().to_string(), config.clone()),
+                    SourceOffset::from_location(&config, e.line(), e.column()),
+                    e
+                ))
+            );
+            println!("Will try to parse the wlogout format instead.");
         }
     }
+
+    serde_json::Deserializer::from_str(&config)
+        .into_iter::<WButton>()
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| {
+            WError::FileParseFailed(
+                NamedSource::new(path.display().to_string(), config.clone()),
+                SourceOffset::from_location(&config, e.line(), e.column()),
+                e,
+            )
+        })
+        .map(|buttons| WButtonConfig { buttons })
 }
 
-fn load_config(file: Option<&impl AsRef<Path>>) -> Result<WButtonConfig, String> {
-    load_file_search(file, &"layout", load_config_from_file)
-}
-
-fn load_css_from_file(path: &dyn AsRef<Path>) -> Result<Option<CssProvider>, String> {
-    if !path.as_ref().is_file() {
-        return Ok(None);
-    }
+fn load_css(file: Option<impl AsRef<Path>>) -> Result<CssProvider, WError> {
+    let path = file
+        .map(file_search_given)
+        .unwrap_or_else(|| file_search_path("style.css"))?;
 
     let provider = CssProvider::new();
     provider
-        .load_from_file(&gio::File::for_path(path))
-        .map_err(|e| format!("Failed to load CSS: {e}"))?;
-    Ok(Some(provider))
-}
-
-fn load_css(file: Option<&impl AsRef<Path>>) -> Result<CssProvider, String> {
-    load_file_search(file, &"style.css", load_css_from_file)
+        .load_from_file(&gio::File::for_path(&path))
+        .map_err(|e| WError::CssReadError(path, e))?;
+    Ok(provider)
 }
 
 fn run_command(command: &str) {
@@ -296,16 +313,10 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
     window.show_all();
 }
 
-fn main() {
+fn main() -> miette::Result<()> {
     let args = Args::parse();
 
-    let button_config = match load_config(args.layout.as_ref()) {
-        Ok(cfg) => cfg,
-        Err(e) => {
-            eprintln!("Failed to load config: {e}");
-            return;
-        }
-    };
+    let button_config = load_config(args.layout.as_ref())?;
 
     let config = Arc::new(AppConfig {
         margin_top: args.margin_top.unwrap_or(args.margin),
@@ -338,4 +349,6 @@ fn main() {
     app.connect_activate(move |app| app_main(&config, app));
 
     app.run_with_args(&[] as &[&str]);
+
+    Ok(())
 }
