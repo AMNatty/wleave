@@ -309,6 +309,7 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
             .name(&bttn.label)
             .hexpand(true)
             .vexpand(true)
+            .cursor(&Cursor::from_name("pointer", None).expect("pointer cursor not found"))
             .build();
 
         if let Some(label) = button.child() {
