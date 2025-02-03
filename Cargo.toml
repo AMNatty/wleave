@@ -3,7 +3,7 @@ name = "wleave"
 version = "0.5.0"
 edition = "2021"
 license = "MIT"
-description = "A Wayland-native logout script written in Gtk3"
+description = "A Wayland layer-shell logout prompt written in GTK"
 repository = "https://github.com/AMNatty/wleave"
 
 [workspace]
@@ -16,8 +16,10 @@ thiserror = "2"
 miette = { version = "7", features = ["derive", "fancy"] }
 
 dirs = "6.0"
-gtk = "0.18"
-gtk-layer-shell = "0.8"
+glib = "0.20"
+glib-macros = "0.20"
+gtk4 = { version = "0.9", features = ["gnome_43"] }
+gtk4-layer-shell = "0.4"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

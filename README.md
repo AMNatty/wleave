@@ -3,7 +3,7 @@
 ![AUR version](https://img.shields.io/aur/version/wleave-git)
 ![GitHub](https://img.shields.io/github/license/AMNatty/wleave)
 
-A Wayland-native logout script written in Gtk3
+A Wayland layer-shell logout prompt, now ported to GTK4!
 
 Basically a fork of [wlogout](https://github.com/ArtsyMacaw/wlogout), rewritten in Rust.
 
@@ -25,8 +25,8 @@ paru -S wleave-git
 
 Dependencies:
 
-- gtk-layer-shell
-- gtk3
+- gtk4-layer-shell
+- gtk4
 - a stable version of the Rust toolchain
 
 You can run the application using `cargo run --release` or GNU make:
@@ -51,6 +51,7 @@ See <https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/keynames.txt> for a 
 
 ## Enhancements
 
+- Natively GTK4 since version 0.5
 - New pretty icons by [@earth-walker](https://github.com/earth-walker)
 - Autoclose when window focus is lost (the `-f/--close-on-lost-focus` flag)
 - Mnemonic labels (the `-k/--show-keybinds` flag)

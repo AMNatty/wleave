@@ -1,15 +1,16 @@
 use clap::Parser;
+use glib::clone;
 use miette::{Diagnostic, NamedSource, Report, SourceOffset};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 
-use gtk::gdk::{keys, EventKey, Screen};
-use gtk::glib::{timeout_add_local_once, Propagation};
-use gtk::prelude::*;
-use gtk::{gio, Application, ApplicationWindow, CssProvider, Label, StyleContext};
-use gtk_layer_shell::LayerShell;
+use gtk4::gdk::{Cursor, Display, Key};
+use gtk4::glib::{timeout_add_local_once, Propagation};
+use gtk4::{gio, Application, ApplicationWindow, CssProvider, Label};
+use gtk4::{prelude::*, EventControllerKey};
+use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use serde::Deserialize;
 use thiserror::Error;
 use wleave::cli_opt::{Args, Protocol};
@@ -83,7 +84,7 @@ pub enum WError {
         #[source] serde_json::Error,
     ),
     #[error("Failed to load CSS from file {0}: {1}")]
-    CssReadError(PathBuf, gtk::glib::Error),
+    CssReadError(PathBuf, gtk4::glib::Error),
 }
 
 fn file_search_given(given_file: impl AsRef<Path>) -> Result<PathBuf, WError> {
@@ -162,9 +163,11 @@ fn load_css(file: Option<impl AsRef<Path>>) -> Result<CssProvider, WError> {
         .unwrap_or_else(|| file_search_path("style.css"))?;
 
     let provider = CssProvider::new();
-    provider
-        .load_from_file(&gio::File::for_path(&path))
-        .map_err(|e| WError::CssReadError(path, e))?;
+    provider.connect_parsing_error(|_provider, _section, error| {
+        eprintln!("CSS Parse error: {:?}", error);
+    });
+    provider.load_from_file(&gio::File::for_path(&path));
+
     Ok(provider)
 }
 
@@ -175,41 +178,58 @@ fn run_command(command: &str) {
 }
 
 fn on_option(command: &str, delay_ms: u32, window: ApplicationWindow) {
-    let state_inner = (command.to_owned(), window.clone());
-    window.connect_hide(move |_| {
-        let state_timer = state_inner.clone();
-        timeout_add_local_once(Duration::from_millis(delay_ms.into()), move || {
-            let (ref action, ref window_handle) = state_timer;
-            run_command(action);
-            window_handle.close();
-        });
-    });
+    window.connect_hide(clone!(
+        #[to_owned]
+        command,
+        #[weak]
+        window,
+        #[upgrade_or_panic]
+        move |_| {
+            timeout_add_local_once(
+                Duration::from_millis(delay_ms.into()),
+                clone!(
+                    #[to_owned]
+                    command,
+                    #[weak]
+                    window,
+                    #[upgrade_or_panic]
+                    move || {
+                        run_command(&command);
+                        window.close();
+                    }
+                ),
+            );
+        }
+    ));
+
     window.hide();
 }
 
-fn handle_key(config: &Arc<AppConfig>, window: &ApplicationWindow, e: &EventKey) -> Propagation {
-    match e.keyval() {
-        keys::constants::Escape => {
-            window.close();
-        }
-        other => {
-            let key = other
-                .to_unicode()
-                .map(|c| c.to_string())
-                .or_else(|| other.name().map(|s| s.to_string()));
+fn handle_key(
+    config: &Arc<AppConfig>,
+    window: &ApplicationWindow,
+    key: &gtk4::gdk::Key,
+) -> Propagation {
+    if let &Key::Escape = key {
+        window.close();
+        return Propagation::Proceed;
+    }
 
-            if let Some(ref key_name) = key {
-                let button = config
-                    .button_config
-                    .buttons
-                    .iter()
-                    .find(|b| b.keybind == *key_name);
+    let key = key
+        .to_unicode()
+        .map(|c| c.to_string())
+        .or_else(|| key.name().map(|s| s.to_string()));
 
-                if let Some(WButton { action, .. }) = button {
-                    let state_action = action.clone();
-                    on_option(&state_action, config.delay_ms, window.clone());
-                }
-            }
+    if let Some(ref key_name) = key {
+        let button = config
+            .button_config
+            .buttons
+            .iter()
+            .find(|b| b.keybind == *key_name);
+
+        if let Some(WButton { action, .. }) = button {
+            let state_action = action.clone();
+            on_option(&state_action, config.delay_ms, window.clone());
         }
     }
 
@@ -217,23 +237,26 @@ fn handle_key(config: &Arc<AppConfig>, window: &ApplicationWindow, e: &EventKey)
 }
 
 fn app_main(config: &Arc<AppConfig>, app: &Application) {
+    let grid = gtk4::Grid::new();
+
     let window = ApplicationWindow::builder()
         .application(app)
         .title("wleave")
+        .child(&grid)
         .build();
 
     match config.protocol {
         Protocol::LayerShell => {
             window.init_layer_shell();
-            window.set_layer(gtk_layer_shell::Layer::Overlay);
+            window.set_layer(gtk4_layer_shell::Layer::Overlay);
             window.set_namespace("wleave");
             window.set_exclusive_zone(-1);
-            window.set_keyboard_interactivity(true);
+            window.set_keyboard_mode(KeyboardMode::Exclusive);
 
-            window.set_anchor(gtk_layer_shell::Edge::Left, true);
-            window.set_anchor(gtk_layer_shell::Edge::Right, true);
-            window.set_anchor(gtk_layer_shell::Edge::Top, true);
-            window.set_anchor(gtk_layer_shell::Edge::Bottom, true);
+            window.set_anchor(gtk4_layer_shell::Edge::Left, true);
+            window.set_anchor(gtk4_layer_shell::Edge::Right, true);
+            window.set_anchor(gtk4_layer_shell::Edge::Top, true);
+            window.set_anchor(gtk4_layer_shell::Edge::Bottom, true);
         }
         Protocol::Xdg => {
             window.fullscreen();
@@ -241,21 +264,23 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
     }
 
     if config.close_on_lost_focus {
-        window.connect_focus_out_event(|window, _| {
-            if window.is_visible() {
+        window.connect_is_active_notify(|window| {
+            if window.is_visible() && !window.is_active() {
                 window.close();
             }
-
-            Propagation::Proceed
         });
     }
 
-    let cfg = config.clone();
-    window.connect_key_press_event(move |window, e| handle_key(&cfg, window, e));
-
-    let grid = gtk::Grid::new();
-
-    window.add(&grid);
+    let key_controller = EventControllerKey::new();
+    key_controller.connect_key_pressed(clone!(
+        #[strong]
+        config,
+        #[weak]
+        window,
+        #[upgrade_or_panic]
+        move |_, key, _, _| handle_key(&config, &window, &key)
+    ));
+    window.add_controller(key_controller);
 
     grid.set_column_spacing(config.column_spacing);
     grid.set_row_spacing(config.row_spacing);
@@ -272,14 +297,14 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
         };
 
         let justify = match bttn.justify.as_str() {
-            "center" => gtk::Justification::Center,
-            "fill" => gtk::Justification::Fill,
-            "left" => gtk::Justification::Left,
-            "right" => gtk::Justification::Right,
-            _ => gtk::Justification::Center,
+            "center" => gtk4::Justification::Center,
+            "fill" => gtk4::Justification::Fill,
+            "left" => gtk4::Justification::Left,
+            "right" => gtk4::Justification::Right,
+            _ => gtk4::Justification::Center,
         };
 
-        let button = gtk::Button::builder()
+        let button = gtk4::Button::builder()
             .label(&label)
             .name(&bttn.label)
             .hexpand(true)
@@ -310,7 +335,7 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
         grid.attach(&button, x as i32, y as i32, 1, 1);
     }
 
-    window.show_all();
+    window.present();
 }
 
 fn main() -> miette::Result<()> {
@@ -338,10 +363,10 @@ fn main() -> miette::Result<()> {
         .build();
 
     app.connect_startup(move |_| match load_css(args.css.as_ref()) {
-        Ok(css) => StyleContext::add_provider_for_screen(
-            &Screen::default().expect("Could not connect to a display."),
+        Ok(css) => gtk4::style_context_add_provider_for_display(
+            &Display::default().expect("Could not connect to a display"),
             &css,
-            gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+            gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
         ),
         Err(e) => eprintln!("Failed to load CSS: {e}"),
     });

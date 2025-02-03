@@ -66,6 +66,6 @@ pub struct Args {
     pub show_keybinds: bool,
 
     /// Use layer-shell or xdg protocol
-    #[arg(short = 'p', long, value_enum, default_value_t = Protocol::Xdg)]
+    #[arg(short = 'p', long, value_enum, default_value_t = Protocol::LayerShell)]
     pub protocol: Protocol,
 }
