@@ -9,8 +9,7 @@ use std::time::Duration;
 use gtk4::gdk::{Cursor, Display, Key};
 use gtk4::glib::{timeout_add_local_once, Propagation};
 use gtk4::{
-    gio, Application, ApplicationWindow, CssProvider, EventControllerMotion, GestureClick, Label,
-    PropagationPhase,
+    gio, Application, ApplicationWindow, CssProvider, GestureClick, Label, PropagationPhase,
 };
 use gtk4::{prelude::*, EventControllerKey};
 use gtk4_layer_shell::{KeyboardMode, LayerShell};
@@ -274,20 +273,16 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
         });
     }
 
-    let click_away_controller = GestureClick::new();
-    click_away_controller.set_propagation_phase(PropagationPhase::Target);
-    click_away_controller.set_button(gtk4::gdk::BUTTON_PRIMARY);
-    click_away_controller.connect_pressed(clone!(
+    let click_away_controller = GestureClick::builder()
+        .propagation_phase(PropagationPhase::Bubble)
+        .button(gtk4::gdk::BUTTON_PRIMARY)
+        .n_points(1)
+        .build();
+    click_away_controller.connect_released(clone!(
         #[weak]
         window,
         #[upgrade_or_panic]
-        move |_, n, _, _| {
-            if n != 1 {
-                return;
-            }
-
-            window.close();
-        }
+        move |_, _, _, _| window.close()
     ));
     window.add_controller(click_away_controller);
 
