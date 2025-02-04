@@ -1,6 +1,8 @@
 use clap::Parser;
 use glib::clone;
 use miette::{Diagnostic, NamedSource, Report, SourceOffset};
+use std::borrow::Cow;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
@@ -124,12 +126,11 @@ fn file_search_path(file_name: impl AsRef<Path>) -> Result<PathBuf, WError> {
     Err(WError::FileNotInSearchPath(file_name.to_owned()))
 }
 
-fn load_config(file: Option<&impl AsRef<Path>>) -> Result<WButtonConfig, WError> {
-    let path = file.map(file_search_given).unwrap_or_else(|| {
-        file_search_path("layout.json").or_else(|_| file_search_path("layout"))
-    })?;
-
-    let config = std::fs::read_to_string(&path).map_err(|e| WError::IoError(path.clone(), e))?;
+fn parse_config(input: impl Read, source_path: Cow<Path>) -> Result<WButtonConfig, WError> {
+    let path = source_path.into_owned();
+    let path_name = path.display().to_string();
+    println!("Reading options from: {}", path_name);
+    let config = std::io::read_to_string(input).map_err(|e| WError::IoError(path, e))?;
 
     match serde_json::de::from_str::<WButtonConfig>(&config) {
         Ok(conf) => return Ok(conf),
@@ -137,7 +138,7 @@ fn load_config(file: Option<&impl AsRef<Path>>) -> Result<WButtonConfig, WError>
             eprintln!(
                 "{:?}",
                 Report::from(WError::FileParseFailed(
-                    NamedSource::new(path.display().to_string(), config.clone()),
+                    NamedSource::new(path_name.clone(), config.to_owned()),
                     SourceOffset::from_location(&config, e.line(), e.column()),
                     e
                 ))
@@ -151,12 +152,26 @@ fn load_config(file: Option<&impl AsRef<Path>>) -> Result<WButtonConfig, WError>
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| {
             WError::FileParseFailed(
-                NamedSource::new(path.display().to_string(), config.clone()),
+                NamedSource::new(path_name, config.to_owned()),
                 SourceOffset::from_location(&config, e.line(), e.column()),
                 e,
             )
         })
         .map(|buttons| WButtonConfig { buttons })
+}
+
+fn load_config(file: Option<&impl AsRef<Path>>) -> Result<WButtonConfig, WError> {
+    if let Some("-") = file.map(AsRef::as_ref).and_then(Path::to_str) {
+        return parse_config(std::io::stdin(), Path::new("<stdin>").into());
+    }
+
+    let file_path = file.map(file_search_given).unwrap_or_else(|| {
+        file_search_path("layout.json").or_else(|_| file_search_path("layout"))
+    })?;
+
+    let input =
+        std::fs::File::open(&file_path).map_err(|e| WError::IoError(file_path.clone(), e))?;
+    parse_config(input, file_path.into())
 }
 
 fn load_css(file: Option<impl AsRef<Path>>) -> Result<CssProvider, WError> {
@@ -340,10 +355,16 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
             button.style_context().add_class("circular");
         }
 
-        let window_handle = window.clone();
-        let delay_ms = config.delay_ms;
-        let state_action = bttn.action.clone();
-        button.connect_clicked(move |_| on_option(&state_action, delay_ms, window_handle.clone()));
+        button.connect_clicked(clone!(
+            #[weak]
+            window,
+            #[to_owned(rename_to = action)]
+            &bttn.action,
+            #[to_owned(rename_to = delay_ms)]
+            &config.delay_ms,
+            #[upgrade_or_panic]
+            move |_| on_option(&action, delay_ms, window)
+        ));
 
         let x = i as u32 % config.buttons_per_row;
         let y = i as u32 / config.buttons_per_row;
