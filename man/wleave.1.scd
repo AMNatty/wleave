@@ -14,7 +14,7 @@ wleave - A Wayland logout menu
 	Show help message and stop
 
 *-l, --layout* <layout>
-	Specify a custom layout file
+	Specify a custom layout file, specify - to read the config from stdin
 
 *-v, --version*
 	Show version number and stop

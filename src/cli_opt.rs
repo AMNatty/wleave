@@ -13,7 +13,7 @@ pub struct Args {
     #[arg(short = 'v', long, action = ArgAction::Version)]
     pub version: Option<bool>,
 
-    /// Specify a layout file
+    /// Specify a layout file, specifying - will read the layout config from stdin
     #[arg(short = 'l', long)]
     pub layout: Option<PathBuf>,
 
