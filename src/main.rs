@@ -340,7 +340,7 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
     let btn_count = config.button_config.buttons.len() as u32;
     let buttons_per_row = match config.buttons_per_row {
         ButtonLayout::PerRow(n) => n,
-        ButtonLayout::RowRatio(n, d) => btn_count * n / d.min((btn_count / n).max(1)),
+        ButtonLayout::RowRatio(n, d) => btn_count * n / d.min(btn_count * n),
     };
 
     for (i, bttn) in config.button_config.buttons.iter().enumerate() {
