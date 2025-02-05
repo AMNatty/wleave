@@ -7,6 +7,10 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
+use tracing::{debug, enabled, error, info, warn, Level};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::EnvFilter;
 
 use gtk4::gdk::{Cursor, Display, Key};
 use gtk4::glib::{timeout_add_local_once, Propagation};
@@ -116,10 +120,10 @@ fn file_search_path(file_name: impl AsRef<Path>) -> Result<PathBuf, WError> {
     ] {
         let full_path = path.join(file_name);
         if full_path.is_file() {
-            eprintln!("File found in: {}", full_path.display());
+            info!("File found in: {}", full_path.display());
             return Ok(full_path);
         } else {
-            eprintln!("No file found in: {}", full_path.display());
+            info!("No file found in: {}", full_path.display());
         }
     }
 
@@ -129,25 +133,18 @@ fn file_search_path(file_name: impl AsRef<Path>) -> Result<PathBuf, WError> {
 fn parse_config(input: impl Read, source_path: Cow<Path>) -> Result<WButtonConfig, WError> {
     let path = source_path.into_owned();
     let path_name = path.display().to_string();
-    println!("Reading options from: {}", path_name);
+    info!("Reading options from: {}", path_name);
     let config = std::io::read_to_string(input).map_err(|e| WError::IoError(path, e))?;
 
-    match serde_json::de::from_str::<WButtonConfig>(&config) {
-        Ok(conf) => return Ok(conf),
-        Err(e) => {
-            eprintln!(
-                "{:?}",
-                Report::from(WError::FileParseFailed(
-                    NamedSource::new(path_name.clone(), config.to_owned()),
-                    SourceOffset::from_location(&config, e.line(), e.column()),
-                    e
-                ))
-            );
-            println!("Will try to parse the wlogout format instead.");
-        }
-    }
+    let new = serde_json::de::from_str::<WButtonConfig>(&config).map_err(|e| {
+        WError::FileParseFailed(
+            NamedSource::new(path_name.clone(), config.to_owned()),
+            SourceOffset::from_location(&config, e.line(), e.column()),
+            e,
+        )
+    });
 
-    serde_json::Deserializer::from_str(&config)
+    let legacy = serde_json::Deserializer::from_str(&config)
         .into_iter::<WButton>()
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| {
@@ -157,7 +154,29 @@ fn parse_config(input: impl Read, source_path: Cow<Path>) -> Result<WButtonConfi
                 e,
             )
         })
-        .map(|buttons| WButtonConfig { buttons })
+        .map(|buttons| WButtonConfig { buttons });
+
+    match (new, legacy) {
+        (Ok(conf), _) => {
+            info!("Using the JSON layout format.");
+            Ok(conf)
+        }
+        (Err(e), Ok(legacy)) => {
+            info!("Using the backwards-compatible layout format.");
+            if !enabled!(Level::DEBUG) {
+                warn!( "If this is not intended, run the application with RUST_LOG=debug to show the JSON parse error.");
+            }
+
+            debug!("The JSON format could not be parsed: {:?}", Report::from(e));
+
+            Ok(legacy)
+        }
+        (Err(e), Err(_)) => {
+            error!("{:?}", e);
+
+            Err(e)
+        }
+    }
 }
 
 fn load_config(file: Option<&impl AsRef<Path>>) -> Result<WButtonConfig, WError> {
@@ -181,7 +200,7 @@ fn load_css(file: Option<impl AsRef<Path>>) -> Result<CssProvider, WError> {
 
     let provider = CssProvider::new();
     provider.connect_parsing_error(|_provider, _section, error| {
-        eprintln!("CSS Parse error: {:?}", error);
+        warn!("CSS Parse error: {:?}", error);
     });
     provider.load_from_file(&gio::File::for_path(&path));
 
@@ -190,7 +209,7 @@ fn load_css(file: Option<impl AsRef<Path>>) -> Result<CssProvider, WError> {
 
 fn run_command(command: &str) {
     if let Err(e) = Command::new("sh").args(["-c", command]).spawn() {
-        eprintln!("Execution error: {e}");
+        error!("Execution error: {e}");
     }
 }
 
@@ -207,12 +226,11 @@ fn on_option(command: &str, delay_ms: u32, window: ApplicationWindow) {
                 clone!(
                     #[to_owned]
                     command,
-                    #[weak]
+                    #[weak_allow_none]
                     window,
-                    #[upgrade_or_panic]
                     move || {
                         run_command(&command);
-                        window.close();
+                        window.inspect(ApplicationWindow::close);
                     }
                 ),
             );
@@ -376,6 +394,15 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
 }
 
 fn main() -> miette::Result<()> {
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer().without_time())
+        .with(
+            EnvFilter::builder()
+                .with_default_directive(Level::INFO.into())
+                .from_env_lossy(),
+        )
+        .init();
+
     let args = Args::parse();
 
     let button_config = load_config(args.layout.as_ref())?;
@@ -405,7 +432,7 @@ fn main() -> miette::Result<()> {
             &css,
             gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
         ),
-        Err(e) => eprintln!("Failed to load CSS: {e}"),
+        Err(e) => error!("Failed to load CSS: {e}"),
     });
 
     app.connect_activate(move |app| app_main(&config, app));
