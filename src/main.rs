@@ -21,7 +21,7 @@ use gtk4::{prelude::*, EventControllerKey};
 use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use serde::Deserialize;
 use thiserror::Error;
-use wleave::cli_opt::{Args, Protocol};
+use wleave::cli_opt::{Args, ButtonLayout, Protocol};
 
 #[derive(Debug, Deserialize)]
 struct WButtonConfig {
@@ -70,7 +70,7 @@ struct AppConfig {
     row_spacing: u32,
     delay_ms: u32,
     protocol: Protocol,
-    buttons_per_row: u32,
+    buttons_per_row: ButtonLayout,
     close_on_lost_focus: bool,
     button_config: WButtonConfig,
     show_keybinds: bool,
@@ -337,6 +337,12 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
     grid.set_margin_start(config.margin_left);
     grid.set_margin_end(config.margin_right);
 
+    let btn_count = config.button_config.buttons.len() as u32;
+    let buttons_per_row = match config.buttons_per_row {
+        ButtonLayout::PerRow(n) => n,
+        ButtonLayout::RowRatio(n, d) => btn_count * n / d.min((btn_count / n).max(1)),
+    };
+
     for (i, bttn) in config.button_config.buttons.iter().enumerate() {
         let label = if config.show_keybinds {
             format!("{} [{}]", bttn.text, bttn.keybind)
@@ -384,8 +390,8 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
             move |_| on_option(&action, delay_ms, window)
         ));
 
-        let x = i as u32 % config.buttons_per_row;
-        let y = i as u32 / config.buttons_per_row;
+        let x = i as u32 % buttons_per_row;
+        let y = i as u32 / buttons_per_row;
 
         grid.attach(&button, x as i32, y as i32, 1, 1);
     }

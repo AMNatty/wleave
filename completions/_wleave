@@ -15,12 +15,12 @@ _wleave() {
 
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" \
-'-l+[Specify a layout file]:LAYOUT:_files' \
-'--layout=[Specify a layout file]:LAYOUT:_files' \
+'-l+[Specify a layout file, specifying - will read the layout config from stdin]:LAYOUT:_files' \
+'--layout=[Specify a layout file, specifying - will read the layout config from stdin]:LAYOUT:_files' \
 '-C+[Specify a custom CSS file]:CSS:_files' \
 '--css=[Specify a custom CSS file]:CSS:_files' \
-'-b+[Set the number of buttons per row]:BUTTONS_PER_ROW: ' \
-'--buttons-per-row=[Set the number of buttons per row]:BUTTONS_PER_ROW: ' \
+'-b+[Set the number of buttons per row, or use a fraction to specify the number of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)]:BUTTONS_PER_ROW: ' \
+'--buttons-per-row=[Set the number of buttons per row, or use a fraction to specify the number of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)]:BUTTONS_PER_ROW: ' \
 '-c+[Set space between buttons columns]:COLUMN_SPACING: ' \
 '--column-spacing=[Set space between buttons columns]:COLUMN_SPACING: ' \
 '-r+[Set space between buttons rows]:ROW_SPACING: ' \
@@ -56,4 +56,8 @@ _wleave_commands() {
     _describe -t commands 'wleave commands' commands "$@"
 }
 
-_wleave "$@"
+if [ "$funcstack[1]" = "_wleave" ]; then
+    _wleave "$@"
+else
+    compdef _wleave wleave
+fi

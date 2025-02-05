@@ -131,4 +131,8 @@ _wleave() {
     esac
 }
 
-complete -F _wleave -o bashdefault -o default wleave
+if [[ "${BASH_VERSINFO[0]}" -eq 4 && "${BASH_VERSINFO[1]}" -ge 4 || "${BASH_VERSINFO[0]}" -gt 4 ]]; then
+    complete -F _wleave -o nosort -o bashdefault -o default wleave
+else
+    complete -F _wleave -o bashdefault -o default wleave
+fi
