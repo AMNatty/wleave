@@ -120,10 +120,10 @@ fn file_search_path(file_name: impl AsRef<Path>) -> Result<PathBuf, WError> {
     ] {
         let full_path = path.join(file_name);
         if full_path.is_file() {
-            info!("File found in: {}", full_path.display());
+            debug!("File found in: {}", full_path.display());
             return Ok(full_path);
         } else {
-            info!("No file found in: {}", full_path.display());
+            debug!("No file found in: {}", full_path.display());
         }
     }
 
