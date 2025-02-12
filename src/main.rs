@@ -162,12 +162,11 @@ fn parse_config(input: impl Read, source_path: Cow<Path>) -> Result<WButtonConfi
             Ok(conf)
         }
         (Err(e), Ok(legacy)) => {
+            debug!("The JSON format could not be parsed: {:?}", Report::from(e));
             info!("Using the backwards-compatible layout format.");
             if !enabled!(Level::DEBUG) {
                 warn!( "If this is not intended, run the application with RUST_LOG=debug to show the JSON parse error.");
             }
-
-            debug!("The JSON format could not be parsed: {:?}", Report::from(e));
 
             Ok(legacy)
         }
