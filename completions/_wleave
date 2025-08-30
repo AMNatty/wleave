@@ -37,14 +37,14 @@ _wleave() {
 '--margin-bottom=[Set the margin for the bottom of buttons]:MARGIN_BOTTOM:_default' \
 '-d+[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS:_default' \
 '--delay-command-ms=[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS:_default' \
-'-f+[Close the menu on lost focus]:CLOSE_ON_LOST_FOCUS:(true false)' \
-'--close-on-lost-focus=[Close the menu on lost focus]:CLOSE_ON_LOST_FOCUS:(true false)' \
-'-k+[Show the associated key binds]:SHOW_KEYBINDS:(true false)' \
-'--show-keybinds=[Show the associated key binds]:SHOW_KEYBINDS:(true false)' \
+'-f+[Close the menu on lost focus]' \
+'--close-on-lost-focus=[Close the menu on lost focus]' \
+'-k+[Show the associated key binds]' \
+'--show-keybinds=[Show the associated key binds]' \
 '-p+[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
 '--protocol=[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
-'-x+[Hide version information]:NO_VERSION_INFO:(true false)' \
-'--no-version-info=[Hide version information]:NO_VERSION_INFO:(true false)' \
+'-x+[Hide version information]' \
+'--no-version-info=[Hide version information]' \
 '-v[]' \
 '--version[]' \
 '-h[Print help]' \

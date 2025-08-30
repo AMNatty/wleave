@@ -67,11 +67,11 @@ pub struct Args {
     pub delay_command_ms: Option<u32>,
 
     /// Close the menu on lost focus
-    #[arg(short = 'f', long, default_missing_value = "true")]
+    #[arg(short = 'f', long, num_args = 0..=1, require_equals = true, default_missing_value = "true")]
     pub close_on_lost_focus: Option<bool>,
 
     /// Show the associated key binds
-    #[arg(short = 'k', long, default_missing_value = "true")]
+    #[arg(short = 'k', long, num_args = 0..=1, require_equals = true, default_missing_value = "true")]
     pub show_keybinds: Option<bool>,
 
     /// Use layer-shell or xdg protocol
@@ -79,7 +79,7 @@ pub struct Args {
     pub protocol: Option<Protocol>,
 
     /// Hide version information
-    #[arg(short = 'x', long, default_missing_value = "true")]
+    #[arg(short = 'x', long, num_args = 0..=1, require_equals = true, default_missing_value = "true")]
     pub no_version_info: Option<bool>,
 }
 
