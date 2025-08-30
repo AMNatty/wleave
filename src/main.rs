@@ -72,7 +72,7 @@ fn on_option(command: &str, delay_ms: u32, window: ApplicationWindow) {
         }
     ));
 
-    window.close();
+    window.set_visible(false);
 }
 
 fn handle_key(
