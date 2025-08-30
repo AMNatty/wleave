@@ -135,6 +135,58 @@ button#suspend {
  */
 ```
 
+### Example recipe
+
+Example stylesheet that makes the selected icon colored with the `libadwaita` accent color:
+
+```css
+window {
+    background-color: rgba(12, 12, 12, 0.8);
+}
+
+button {
+    color: var(--accent-color);
+    background-color: var(--view-bg-color);
+    border: none;
+    padding: 10px;
+}
+
+button label.action-name {
+    font-size: 24px;
+}
+
+button label.keybind {
+    font-size: 20px;
+    font-family: monospace;
+}
+
+button:hover label.keybind, button:focus label.keybind {
+    opacity: 1;
+}
+
+/*
+ * This is a bit of a hack. 
+ * The SVG color is computed only once at the beginning, 
+ * so the accented color needs to be the initial one.
+ */
+button:not(:focus):not(:hover) picture, button:not(:focus):not(:hover) label {
+    filter: saturate(0);
+}
+
+button:hover,
+button:focus {
+    background-color: var(--window-bg-color);
+}
+
+button:active {
+    background-color: var(--accent-bg-color);
+}
+
+button:active picture {
+    filter: brightness(2.0);
+}
+```
+
 ## Keybinds reference
 
 See <https://gitlab.gnome.org/GNOME/gtk/-/blob/4.18.0/gdk/keynames.txt> for a list of valid keybinds.
