@@ -25,7 +25,6 @@ wleave - A Wayland logout menu
 *-b, --buttons-per-row* <num>
 	Set the number of buttons per row, or use a fraction to specify the number of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)
 
-
 *-c, --column-spacing* <space>
 	Set space between buttons columns
 
@@ -41,13 +40,10 @@ wleave - A Wayland logout menu
 *-R, --margin-right* <padding>
 	Set margin for right of buttons
 
-*-T, --margin-right* <padding>
+*-T, --margin-top* <padding>
 	Set margin for top of buttons
 
-*-B, --margin-right* <padding>
-	Set margin for bottom of buttons
-
-*-B, --margin-right* <padding>
+*-B, --margin-bottom* <padding>
 	Set margin for bottom of buttons
 
 *-f, --close-on-lost-focus*
@@ -58,6 +54,12 @@ wleave - A Wayland logout menu
 
 *-p, --protocol* <protocol>
 	Takes either layer-shell or xdg. The layer-shell allows transparency effects; however, only a few compositors correctly support it. The xdg protocol will work on almost all compositors, but does not allow for transparency.
+
+*-d, --delay-command-ms* <number>
+	The number of milliseconds to wait after an action before the associated command is executed
+
+*-x, --no-version-info*
+	Hide the version label
 
 # DESCRIPTION
 

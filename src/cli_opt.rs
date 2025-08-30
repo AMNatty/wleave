@@ -1,4 +1,5 @@
 use clap::{ArgAction, Parser, ValueEnum};
+use serde::{Deserialize, Deserializer};
 use std::{
     error::Error,
     fmt::{Debug, Display},
@@ -7,8 +8,9 @@ use std::{
     str::FromStr,
 };
 
-#[derive(Debug, Copy, Clone, ValueEnum)]
+#[derive(Debug, Copy, Clone, Default, ValueEnum, Deserialize)]
 pub enum Protocol {
+    #[default]
     LayerShell,
     Xdg,
 }
@@ -29,20 +31,20 @@ pub struct Args {
 
     /// Set the number of buttons per row, or use a fraction to specify the number of rows to be
     /// used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)
-    #[arg(short = 'b', long = "buttons-per-row", value_parser = clap::value_parser!(ButtonLayout), default_value_t = ButtonLayout::PerRow(3))]
-    pub buttons_per_row: ButtonLayout,
+    #[arg(short = 'b', long, value_parser = clap::value_parser!(ButtonLayout))]
+    pub buttons_per_row: Option<ButtonLayout>,
 
     /// Set space between buttons columns
-    #[arg(short = 'c', long = "column-spacing", default_value_t = 5)]
-    pub column_spacing: u32,
+    #[arg(short = 'c', long)]
+    pub column_spacing: Option<u32>,
 
     /// Set space between buttons rows
-    #[arg(short = 'r', long = "row-spacing", default_value_t = 5)]
-    pub row_spacing: u32,
+    #[arg(short = 'r', long)]
+    pub row_spacing: Option<u32>,
 
     /// Set the margin around buttons
-    #[arg(short = 'm', long, default_value_t = 230)]
-    pub margin: i32,
+    #[arg(short = 'm', long)]
+    pub margin: Option<i32>,
 
     /// Set margin for the left of buttons
     #[arg(short = 'L', long)]
@@ -61,26 +63,46 @@ pub struct Args {
     pub margin_bottom: Option<i32>,
 
     /// The delay (in milliseconds) between the window closing and executing the selected option
-    #[arg(short = 'd', long, default_value_t = 100)]
-    pub delay_command_ms: u32,
+    #[arg(short = 'd', long)]
+    pub delay_command_ms: Option<u32>,
 
     /// Close the menu on lost focus
-    #[arg(short = 'f', long)]
-    pub close_on_lost_focus: bool,
+    #[arg(short = 'f', long, default_missing_value = "true")]
+    pub close_on_lost_focus: Option<bool>,
 
     /// Show the associated key binds
-    #[arg(short = 'k', long)]
-    pub show_keybinds: bool,
+    #[arg(short = 'k', long, default_missing_value = "true")]
+    pub show_keybinds: Option<bool>,
 
     /// Use layer-shell or xdg protocol
-    #[arg(short = 'p', long, value_enum, default_value_t = Protocol::LayerShell)]
-    pub protocol: Protocol,
+    #[arg(short = 'p', long, value_enum)]
+    pub protocol: Option<Protocol>,
+
+    /// Hide version information
+    #[arg(short = 'x', long, default_missing_value = "true")]
+    pub no_version_info: Option<bool>,
 }
 
 #[derive(Clone, Copy, Debug)]
 pub enum ButtonLayout {
     PerRow(u32),
     RowRatio(u32, u32),
+}
+
+impl Default for ButtonLayout {
+    fn default() -> Self {
+        ButtonLayout::PerRow(3)
+    }
+}
+
+impl<'de> Deserialize<'de> for ButtonLayout {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        FromStr::from_str(&s).map_err(serde::de::Error::custom)
+    }
 }
 
 impl FromStr for ButtonLayout {

@@ -1,80 +1,27 @@
+mod button;
+mod config;
+
 use clap::Parser;
 use glib::clone;
-use miette::{Diagnostic, NamedSource, Report, SourceOffset};
-use std::borrow::Cow;
-use std::io::Read;
-use std::path::{Path, PathBuf};
+use miette::{Diagnostic, NamedSource, SourceOffset, miette};
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
-use tracing::{debug, enabled, error, info, warn, Level};
+use tracing::{Level, error};
+use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::EnvFilter;
 
-use gtk4::gdk::{Cursor, Display, Key};
-use gtk4::glib::{timeout_add_local_once, Propagation};
-use gtk4::{
-    gio, Application, ApplicationWindow, CssProvider, GestureClick, Label, PropagationPhase,
-};
-use gtk4::{prelude::*, EventControllerKey};
+use crate::button::WButton;
+use crate::config::{AppConfig, load_config, load_css, merge_with_args};
+use gtk4::gdk::{Cursor, Display};
+use gtk4::glib::{Propagation, timeout_add_local_once};
+use gtk4::{ApplicationWindow, GestureClick, PropagationPhase};
+use gtk4::{EventControllerKey, prelude::*};
 use gtk4_layer_shell::{KeyboardMode, LayerShell};
-use serde::Deserialize;
 use thiserror::Error;
 use wleave::cli_opt::{Args, ButtonLayout, Protocol};
-
-#[derive(Debug, Deserialize)]
-struct WButtonConfig {
-    buttons: Vec<WButton>,
-}
-
-#[derive(Debug, Deserialize)]
-struct WButton {
-    label: String,
-    action: String,
-    text: String,
-    keybind: String,
-    #[serde(default = "default_justify")]
-    justify: String,
-    #[serde(default = "default_width")]
-    width: f32,
-    #[serde(default = "default_height")]
-    height: f32,
-    #[serde(default = "default_circular")]
-    circular: bool,
-}
-
-fn default_justify() -> String {
-    String::from("center")
-}
-
-fn default_width() -> f32 {
-    0.5
-}
-
-fn default_height() -> f32 {
-    0.9
-}
-
-fn default_circular() -> bool {
-    false
-}
-
-#[derive(Debug)]
-struct AppConfig {
-    margin_left: i32,
-    margin_right: i32,
-    margin_top: i32,
-    margin_bottom: i32,
-    column_spacing: u32,
-    row_spacing: u32,
-    delay_ms: u32,
-    protocol: Protocol,
-    buttons_per_row: ButtonLayout,
-    close_on_lost_focus: bool,
-    button_config: WButtonConfig,
-    show_keybinds: bool,
-}
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum WError {
@@ -92,118 +39,7 @@ pub enum WError {
         #[source] serde_json::Error,
     ),
     #[error("Failed to load CSS from file {0}: {1}")]
-    CssReadError(PathBuf, gtk4::glib::Error),
-}
-
-fn file_search_given(given_file: impl AsRef<Path>) -> Result<PathBuf, WError> {
-    let file = given_file.as_ref();
-    if !file.is_file() {
-        return Err(WError::SpecifiedPathNotAFile(file.to_owned()));
-    }
-
-    Ok(file.to_owned())
-}
-
-fn file_search_path(file_name: impl AsRef<Path>) -> Result<PathBuf, WError> {
-    let file_name = file_name.as_ref();
-    let user_config_dir = dirs::config_dir()
-        .or_else(|| dirs::home_dir().map(|p| p.join(".config")))
-        .unwrap_or_else(|| Path::new("~/.config").to_owned());
-
-    for path in &[
-        &user_config_dir.join("wleave"),
-        &user_config_dir.join("wlogout"),
-        Path::new("/etc/wleave"),
-        Path::new("/etc/wlogout"),
-        Path::new("/usr/local/etc/wleave"),
-        Path::new("/usr/local/etc/wlogout"),
-    ] {
-        let full_path = path.join(file_name);
-        if full_path.is_file() {
-            debug!("File found in: {}", full_path.display());
-            return Ok(full_path);
-        } else {
-            debug!("No file found in: {}", full_path.display());
-        }
-    }
-
-    Err(WError::FileNotInSearchPath(file_name.to_owned()))
-}
-
-fn parse_config(input: impl Read, source_path: Cow<Path>) -> Result<WButtonConfig, WError> {
-    let path = source_path.into_owned();
-    let path_name = path.display().to_string();
-    info!("Reading options from: {}", path_name);
-    let config = std::io::read_to_string(input).map_err(|e| WError::IoError(path, e))?;
-
-    let new = serde_json::de::from_str::<WButtonConfig>(&config).map_err(|e| {
-        WError::FileParseFailed(
-            NamedSource::new(path_name.clone(), config.to_owned()),
-            SourceOffset::from_location(&config, e.line(), e.column()),
-            e,
-        )
-    });
-
-    let legacy = serde_json::Deserializer::from_str(&config)
-        .into_iter::<WButton>()
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| {
-            WError::FileParseFailed(
-                NamedSource::new(path_name, config.to_owned()),
-                SourceOffset::from_location(&config, e.line(), e.column()),
-                e,
-            )
-        })
-        .map(|buttons| WButtonConfig { buttons });
-
-    match (new, legacy) {
-        (Ok(conf), _) => {
-            info!("Using the JSON layout format.");
-            Ok(conf)
-        }
-        (Err(e), Ok(legacy)) => {
-            debug!("The JSON format could not be parsed: {:?}", Report::from(e));
-            info!("Using the backwards-compatible layout format.");
-            if !enabled!(Level::DEBUG) {
-                warn!( "If this is not intended, run the application with RUST_LOG=debug to show the JSON parse error.");
-            }
-
-            Ok(legacy)
-        }
-        (Err(e), Err(_)) => {
-            error!("{:?}", e);
-
-            Err(e)
-        }
-    }
-}
-
-fn load_config(file: Option<&impl AsRef<Path>>) -> Result<WButtonConfig, WError> {
-    if let Some("-") = file.map(AsRef::as_ref).and_then(Path::to_str) {
-        return parse_config(std::io::stdin(), Path::new("<stdin>").into());
-    }
-
-    let file_path = file.map(file_search_given).unwrap_or_else(|| {
-        file_search_path("layout.json").or_else(|_| file_search_path("layout"))
-    })?;
-
-    let input =
-        std::fs::File::open(&file_path).map_err(|e| WError::IoError(file_path.clone(), e))?;
-    parse_config(input, file_path.into())
-}
-
-fn load_css(file: Option<impl AsRef<Path>>) -> Result<CssProvider, WError> {
-    let path = file
-        .map(file_search_given)
-        .unwrap_or_else(|| file_search_path("style.css"))?;
-
-    let provider = CssProvider::new();
-    provider.connect_parsing_error(|_provider, _section, error| {
-        warn!("CSS Parse error: {:?}", error);
-    });
-    provider.load_from_file(&gio::File::for_path(&path));
-
-    Ok(provider)
+    CssReadError(PathBuf, glib::Error),
 }
 
 fn run_command(command: &str) {
@@ -236,7 +72,7 @@ fn on_option(command: &str, delay_ms: u32, window: ApplicationWindow) {
         }
     ));
 
-    window.hide();
+    window.close();
 }
 
 fn handle_key(
@@ -244,7 +80,7 @@ fn handle_key(
     window: &ApplicationWindow,
     key: &gtk4::gdk::Key,
 ) -> Propagation {
-    if let &Key::Escape = key {
+    if let &gtk4::gdk::Key::Escape = key {
         window.close();
         return Propagation::Proceed;
     }
@@ -255,35 +91,120 @@ fn handle_key(
         .or_else(|| key.name().map(|s| s.to_string()));
 
     if let Some(ref key_name) = key {
-        let button = config
-            .button_config
-            .buttons
-            .iter()
-            .find(|b| b.keybind == *key_name);
+        let button = config.buttons.iter().find(|b| b.keybind == *key_name);
 
         if let Some(WButton { action, .. }) = button {
             let state_action = action.clone();
-            on_option(&state_action, config.delay_ms, window.clone());
+            on_option(&state_action, config.delay_command_ms, window.clone());
         }
     }
 
     Propagation::Proceed
 }
 
-fn app_main(config: &Arc<AppConfig>, app: &Application) {
-    let grid = gtk4::Grid::new();
+fn rasterize_svg_picture(icon: &str, button: &gtk4::Button) -> miette::Result<gtk4::Picture> {
+    let mut handle = rsvg::Loader::new()
+        .read_path(icon)
+        .map_err(|e| miette!("Failed to read SVG: {}", e))?;
+
+    let current_color = button.color();
+    let color_str = current_color.to_string();
+
+    handle
+        .set_stylesheet(&format!(
+            r#"
+            svg {{
+                color: {color_str} !important;
+            }}
+        "#
+        ))
+        .map_err(|e| miette!("Failed to set stylesheet for SVG while loading: {}", e))?;
+
+    let renderer = rsvg::CairoRenderer::new(&handle);
+
+    let (width, height) = if let Some((w, h)) = renderer.intrinsic_size_in_pixels() {
+        (w.ceil(), h.ceil())
+    } else {
+        (256.0, 256.0)
+    };
+
+    let surface = cairo::ImageSurface::create(cairo::Format::ARgb32, width as i32, height as i32)
+        .map_err(|e| miette!("Failed to create a Cairo surface: {}", e))?;
+
+    let ctx = cairo::Context::new(&surface)
+        .map_err(|e| miette!("Failed to create a Cairo context: {}", e))?;
+
+    renderer
+        .render_document(&ctx, &cairo::Rectangle::new(0.0, 0.0, width, height))
+        .map_err(|e| miette!("Failed to render SVG: {}", e))?;
+
+    drop(renderer);
+    drop(ctx);
+
+    let data = surface
+        .take_data()
+        .map_err(|e| miette!("Failed to take Cairo image data: {}", e))?;
+
+    let bytes = glib::Bytes::from(data.as_ref());
+
+    cfg_if::cfg_if! {
+        if #[cfg(target_endian = "little")] {
+            let format = gdk4::MemoryFormat::B8g8r8a8;
+        } else {
+            let format = gdk4::MemoryFormat::A8r8g8b8;
+        }
+    };
+
+    let texture = gdk4::MemoryTexture::new(
+        width as i32,
+        height as i32,
+        format,
+        &bytes,
+        4 * width as usize,
+    );
+
+    let paintable = gdk4::Paintable::from(texture);
+
+    let picture = gtk4::Picture::for_paintable(&paintable);
+
+    Ok(picture)
+}
+
+fn create_picture_from_icon(icon_path: &str, button: &gtk4::Button) -> gtk4::Picture {
+    let picture = if icon_path.ends_with(".svg") {
+        rasterize_svg_picture(icon_path, button).unwrap_or_else(|e| {
+            error!("Failed to load image as SVG: {}", e);
+            gtk4::Picture::for_filename(icon_path)
+        })
+    } else {
+        gtk4::Picture::for_filename(icon_path)
+    };
+
+    picture.set_content_fit(gtk4::ContentFit::ScaleDown);
+    picture.add_css_class("icon-dropshadow");
+    picture
+}
+
+fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
+    let container_box = gtk4::Box::builder()
+        .orientation(gtk4::Orientation::Vertical)
+        .margin_top(config.margin_top.unwrap_or(config.margin))
+        .margin_bottom(config.margin_bottom.unwrap_or(config.margin))
+        .margin_start(config.margin_left.unwrap_or(config.margin))
+        .margin_end(config.margin_right.unwrap_or(config.margin))
+        .build();
 
     let window = ApplicationWindow::builder()
         .application(app)
         .title("wleave")
-        .child(&grid)
+        .child(&container_box)
         .build();
 
     match config.protocol {
         Protocol::LayerShell => {
             window.init_layer_shell();
             window.set_layer(gtk4_layer_shell::Layer::Overlay);
-            window.set_namespace("wleave");
+            window.set_namespace(Some("wleave"));
             window.set_exclusive_zone(-1);
             window.set_keyboard_mode(KeyboardMode::Exclusive);
 
@@ -329,26 +250,17 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
     ));
     window.add_controller(key_controller);
 
+    let grid = gtk4::Grid::new();
     grid.set_column_spacing(config.column_spacing);
     grid.set_row_spacing(config.row_spacing);
-    grid.set_margin_top(config.margin_top);
-    grid.set_margin_bottom(config.margin_bottom);
-    grid.set_margin_start(config.margin_left);
-    grid.set_margin_end(config.margin_right);
 
-    let btn_count = config.button_config.buttons.len() as u32;
+    let btn_count = config.buttons.len() as u32;
     let buttons_per_row = match config.buttons_per_row {
         ButtonLayout::PerRow(n) => n,
         ButtonLayout::RowRatio(n, d) => btn_count * n / d.min(btn_count * n),
     };
 
-    for (i, bttn) in config.button_config.buttons.iter().enumerate() {
-        let label = if config.show_keybinds {
-            format!("{} [{}]", bttn.text, bttn.keybind)
-        } else {
-            bttn.text.to_owned()
-        };
-
+    for (i, bttn) in config.buttons.iter().enumerate() {
         let justify = match bttn.justify.as_str() {
             "center" => gtk4::Justification::Center,
             "fill" => gtk4::Justification::Fill,
@@ -358,24 +270,60 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
         };
 
         let button = gtk4::Button::builder()
-            .label(&label)
             .name(&bttn.label)
             .hexpand(true)
             .vexpand(true)
             .cursor(&Cursor::from_name("pointer", None).expect("pointer cursor not found"))
             .build();
 
-        if let Some(label) = button.child() {
-            if let Some(label) = label.downcast_ref::<Label>() {
-                label.set_xalign(bttn.width);
-                label.set_yalign(bttn.height);
-                label.set_use_markup(true);
-                label.set_justify(justify);
-            }
+        let overlay = gtk4::Overlay::new();
+
+        if config.show_keybinds {
+            let key_label = gtk4::Label::builder()
+                .label(format!("[{}]", bttn.keybind))
+                .halign(gtk4::Align::Start)
+                .valign(gtk4::Align::Start)
+                .css_classes(["dimmed", "keybind"])
+                .build();
+
+            overlay.add_overlay(&key_label);
         }
 
+        let inner = gtk4::Box::builder()
+            .orientation(gtk4::Orientation::Vertical)
+            .valign(gtk4::Align::Center)
+            .build();
+
+        let picture = if let Some(icon) = &bttn.icon {
+            let picture = create_picture_from_icon(icon, &button);
+            inner.insert_child_after(&picture, Option::<&gtk4::Widget>::None);
+            Some(picture)
+        } else {
+            None
+        };
+
+        let label = gtk4::Label::builder()
+            .label(&bttn.text)
+            .css_classes(["action-name"])
+            .use_markup(true)
+            .justify(justify)
+            .build();
+
+        // Picture being none means the old system to configure buttons is used
+        if bttn.width.is_some() || bttn.height.is_some() || picture.is_none() {
+            label.set_xalign(bttn.width.unwrap_or(0.5));
+            label.set_yalign(bttn.height.unwrap_or(0.9));
+            overlay.add_overlay(&label);
+        } else {
+            inner.insert_child_after(&label, picture.as_ref());
+        }
+
+        overlay.set_child(Some(&inner));
+
+        button.set_child(Some(&overlay));
+
         if bttn.circular {
-            button.style_context().add_class("circular");
+            button.add_css_class("circular");
         }
 
         button.connect_clicked(clone!(
@@ -384,7 +332,7 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
             #[to_owned(rename_to = action)]
             &bttn.action,
             #[to_owned(rename_to = delay_ms)]
-            &config.delay_ms,
+            &config.delay_command_ms,
             #[upgrade_or_panic]
             move |_| on_option(&action, delay_ms, window)
         ));
@@ -395,7 +343,36 @@ fn app_main(config: &Arc<AppConfig>, app: &Application) {
         grid.attach(&button, x as i32, y as i32, 1, 1);
     }
 
+    container_box.insert_child_after(&grid, Option::<&gtk4::Widget>::None);
+
+    if !config.no_version_info {
+        let version_info = gtk4::Label::builder()
+        .label(format!(
+            "Wleave {}. <a href=\"https://github.com/AMNatty/wleave/releases/tag/0.6.0\">Missing or broken icons?</a>",
+            env!("CARGO_PKG_VERSION")
+        ))
+        .use_markup(true)
+        .can_focus(false)
+        .css_classes(["dimmed", "version-info"])
+        .margin_top(12)
+        .build();
+        container_box.insert_child_after(&version_info, Some(&grid));
+    }
+
     window.present();
+}
+
+fn on_startup(config: &AppConfig) {
+    let display = Display::default().expect("Could not connect to a display");
+
+    match load_css(config.css.as_ref()) {
+        Ok(css) => gtk4::style_context_add_provider_for_display(
+            &display,
+            &css,
+            gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+        ),
+        Err(e) => error!("Failed to load CSS: {e}"),
+    };
 }
 
 fn main() -> miette::Result<()> {
@@ -410,35 +387,20 @@ fn main() -> miette::Result<()> {
 
     let args = Args::parse();
 
-    let button_config = load_config(args.layout.as_ref())?;
+    let mut config = load_config(args.layout.as_ref())?;
+    merge_with_args(&mut config, &args);
 
-    let config = Arc::new(AppConfig {
-        margin_top: args.margin_top.unwrap_or(args.margin),
-        margin_bottom: args.margin_bottom.unwrap_or(args.margin),
-        margin_left: args.margin_left.unwrap_or(args.margin),
-        margin_right: args.margin_right.unwrap_or(args.margin),
-        row_spacing: args.row_spacing,
-        column_spacing: args.column_spacing,
-        protocol: args.protocol,
-        buttons_per_row: args.buttons_per_row,
-        close_on_lost_focus: args.close_on_lost_focus,
-        show_keybinds: args.show_keybinds,
-        button_config,
-        delay_ms: args.delay_command_ms,
-    });
+    let config = Arc::new(config);
 
-    let app = Application::builder()
+    let app = libadwaita::Application::builder()
         .application_id("sh.natty.Wleave")
         .build();
 
-    app.connect_startup(move |_| match load_css(args.css.as_ref()) {
-        Ok(css) => gtk4::style_context_add_provider_for_display(
-            &Display::default().expect("Could not connect to a display"),
-            &css,
-            gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-        ),
-        Err(e) => error!("Failed to load CSS: {e}"),
-    });
+    app.connect_startup(clone!(
+        #[strong]
+        config,
+        move |_| on_startup(config.as_ref())
+    ));
 
     app.connect_activate(move |app| app_main(&config, app));
 

@@ -1,12 +1,16 @@
 _wleave() {
     local i cur prev opts cmd
     COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+        cur="$2"
+    else
+        cur="${COMP_WORDS[COMP_CWORD]}"
+    fi
+    prev="$3"
     cmd=""
     opts=""
 
-    for i in ${COMP_WORDS[@]}
+    for i in "${COMP_WORDS[@]:0:COMP_CWORD}"
     do
         case "${cmd},${i}" in
             ",$1")
@@ -19,7 +23,7 @@ _wleave() {
 
     case "${cmd}" in
         wleave)
-            opts="-v -l -C -b -c -r -m -L -R -T -B -d -f -k -p -h --version --layout --css --buttons-per-row --column-spacing --row-spacing --margin --margin-left --margin-right --margin-top --margin-bottom --delay-command-ms --close-on-lost-focus --show-keybinds --protocol --help"
+            opts="-v -l -C -b -c -r -m -L -R -T -B -d -f -k -p -x -h --version --layout --css --buttons-per-row --column-spacing --row-spacing --margin --margin-left --margin-right --margin-top --margin-bottom --delay-command-ms --close-on-lost-focus --show-keybinds --protocol --no-version-info --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -113,12 +117,36 @@ _wleave() {
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
+                --close-on-lost-focus)
+                    COMPREPLY=($(compgen -W "true false" -- "${cur}"))
+                    return 0
+                    ;;
+                -f)
+                    COMPREPLY=($(compgen -W "true false" -- "${cur}"))
+                    return 0
+                    ;;
+                --show-keybinds)
+                    COMPREPLY=($(compgen -W "true false" -- "${cur}"))
+                    return 0
+                    ;;
+                -k)
+                    COMPREPLY=($(compgen -W "true false" -- "${cur}"))
+                    return 0
+                    ;;
                 --protocol)
                     COMPREPLY=($(compgen -W "layer-shell xdg" -- "${cur}"))
                     return 0
                     ;;
                 -p)
                     COMPREPLY=($(compgen -W "layer-shell xdg" -- "${cur}"))
+                    return 0
+                    ;;
+                --no-version-info)
+                    COMPREPLY=($(compgen -W "true false" -- "${cur}"))
+                    return 0
+                    ;;
+                -x)
+                    COMPREPLY=($(compgen -W "true false" -- "${cur}"))
                     return 0
                     ;;
                 *)

@@ -9,8 +9,13 @@ complete -c wleave -s R -l margin-right -d 'Set margin for the right of buttons'
 complete -c wleave -s T -l margin-top -d 'Set margin for the top of buttons' -r
 complete -c wleave -s B -l margin-bottom -d 'Set the margin for the bottom of buttons' -r
 complete -c wleave -s d -l delay-command-ms -d 'The delay (in milliseconds) between the window closing and executing the selected option' -r
-complete -c wleave -s p -l protocol -d 'Use layer-shell or xdg protocol' -r -f -a "{layer-shell	'',xdg	''}"
+complete -c wleave -s f -l close-on-lost-focus -d 'Close the menu on lost focus' -r -f -a "true\t''
+false\t''"
+complete -c wleave -s k -l show-keybinds -d 'Show the associated key binds' -r -f -a "true\t''
+false\t''"
+complete -c wleave -s p -l protocol -d 'Use layer-shell or xdg protocol' -r -f -a "layer-shell\t''
+xdg\t''"
+complete -c wleave -s x -l no-version-info -d 'Hide version information' -r -f -a "true\t''
+false\t''"
 complete -c wleave -s v -l version
-complete -c wleave -s f -l close-on-lost-focus -d 'Close the menu on lost focus'
-complete -c wleave -s k -l show-keybinds -d 'Show the associated key binds'
 complete -c wleave -s h -l help -d 'Print help'

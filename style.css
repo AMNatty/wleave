@@ -1,53 +1,69 @@
-* {
-  background-image: none;
-}
+/**
+ * See https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/css-variables.html for more CSS variables.
+ * Or use your own colors. Both work, but using your own colors may break the automatic light/dark theme function.
+ */
 
 window {
-  background-color: rgba(12, 12, 12, 0.9);
+    background-color: rgba(12, 12, 12, 0.8);
 }
 
 button {
-  color: #ffffff;
-  background-color: #1e1e1e;
-  border-style: solid;
-  border-width: 2px;
-  background-repeat: no-repeat;
-  background-position: center;
+    color: var(--view-fg-color);
+    background-color: var(--view-bg-color);
+    border: none;
+    padding: 10px;
+}
+
+button label.action-name {
+    font-size: 24px;
+}
+
+button label.keybind {
+    font-size: 20px;
+    font-family: monospace;
+}
+
+button:hover label.keybind, button:focus label.keybind {
+    opacity: 1;
+}
+
+button picture {
+    color: var(--view-fg-color);
 }
 
 button:focus,
-button:active,
 button:hover {
-  background-color: #3700b3;
-  outline-style: none;
+    background-color: var(--accent-bg-color);
 }
 
-#lock {
-  background-image: url("/usr/share/wleave/icons/lock.svg"),
-    url("/usr/local/share/wleave/icons/lock.svg");
+button:active {
+    background-color: var(--accent-color);
 }
 
-#logout {
-  background-image: url("/usr/share/wleave/icons/logout.svg"),
-    url("/usr/local/share/wleave/icons/logout.svg");
-}
-
-#suspend {
-  background-image: url("/usr/share/wleave/icons/suspend.svg"),
-    url("/usr/local/share/wleave/icons/suspend.svg");
-}
-
-#hibernate {
-  background-image: url("/usr/share/wleave/icons/hibernate.svg"),
-    url("/usr/local/share/wleave/icons/hibernate.svg");
-}
-
-#shutdown {
-  background-image: url("/usr/share/wleave/icons/shutdown.svg"),
-    url("/usr/local/share/wleave/icons/shutdown.svg");
-}
-
-#reboot {
-  background-image: url("/usr/share/wleave/icons/reboot.svg"),
-    url("/usr/local/share/wleave/icons/reboot.svg");
-}
+/**
+ * Uncomment this for colorized icons.
+ *
+ * button#shutdown {
+ *     color: #ff8d8d;
+ * }
+ *
+ * button#hibernate {
+ *     color: #a8c0ff;
+ * }
+ *
+ * button#reboot {
+ *     color: #84ffaa;
+ * }
+ *
+ * button#lock {
+ *     color: #f9e2af;
+ * }
+ *
+ * button#logout {
+ *     color: #f9c5af;
+ * }
+ *
+ * button#suspend {
+ *     color: #caaff9;
+ * }
+ */

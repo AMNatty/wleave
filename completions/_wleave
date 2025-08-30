@@ -14,37 +14,39 @@ _wleave() {
     fi
 
     local context curcontext="$curcontext" state line
-    _arguments "${_arguments_options[@]}" \
+    _arguments "${_arguments_options[@]}" : \
 '-l+[Specify a layout file, specifying - will read the layout config from stdin]:LAYOUT:_files' \
 '--layout=[Specify a layout file, specifying - will read the layout config from stdin]:LAYOUT:_files' \
 '-C+[Specify a custom CSS file]:CSS:_files' \
 '--css=[Specify a custom CSS file]:CSS:_files' \
-'-b+[Set the number of buttons per row, or use a fraction to specify the number of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)]:BUTTONS_PER_ROW: ' \
-'--buttons-per-row=[Set the number of buttons per row, or use a fraction to specify the number of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)]:BUTTONS_PER_ROW: ' \
-'-c+[Set space between buttons columns]:COLUMN_SPACING: ' \
-'--column-spacing=[Set space between buttons columns]:COLUMN_SPACING: ' \
-'-r+[Set space between buttons rows]:ROW_SPACING: ' \
-'--row-spacing=[Set space between buttons rows]:ROW_SPACING: ' \
-'-m+[Set the margin around buttons]:MARGIN: ' \
-'--margin=[Set the margin around buttons]:MARGIN: ' \
-'-L+[Set margin for the left of buttons]:MARGIN_LEFT: ' \
-'--margin-left=[Set margin for the left of buttons]:MARGIN_LEFT: ' \
-'-R+[Set margin for the right of buttons]:MARGIN_RIGHT: ' \
-'--margin-right=[Set margin for the right of buttons]:MARGIN_RIGHT: ' \
-'-T+[Set margin for the top of buttons]:MARGIN_TOP: ' \
-'--margin-top=[Set margin for the top of buttons]:MARGIN_TOP: ' \
-'-B+[Set the margin for the bottom of buttons]:MARGIN_BOTTOM: ' \
-'--margin-bottom=[Set the margin for the bottom of buttons]:MARGIN_BOTTOM: ' \
-'-d+[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS: ' \
-'--delay-command-ms=[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS: ' \
+'-b+[Set the number of buttons per row, or use a fraction to specify the number of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)]:BUTTONS_PER_ROW:_default' \
+'--buttons-per-row=[Set the number of buttons per row, or use a fraction to specify the number of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)]:BUTTONS_PER_ROW:_default' \
+'-c+[Set space between buttons columns]:COLUMN_SPACING:_default' \
+'--column-spacing=[Set space between buttons columns]:COLUMN_SPACING:_default' \
+'-r+[Set space between buttons rows]:ROW_SPACING:_default' \
+'--row-spacing=[Set space between buttons rows]:ROW_SPACING:_default' \
+'-m+[Set the margin around buttons]:MARGIN:_default' \
+'--margin=[Set the margin around buttons]:MARGIN:_default' \
+'-L+[Set margin for the left of buttons]:MARGIN_LEFT:_default' \
+'--margin-left=[Set margin for the left of buttons]:MARGIN_LEFT:_default' \
+'-R+[Set margin for the right of buttons]:MARGIN_RIGHT:_default' \
+'--margin-right=[Set margin for the right of buttons]:MARGIN_RIGHT:_default' \
+'-T+[Set margin for the top of buttons]:MARGIN_TOP:_default' \
+'--margin-top=[Set margin for the top of buttons]:MARGIN_TOP:_default' \
+'-B+[Set the margin for the bottom of buttons]:MARGIN_BOTTOM:_default' \
+'--margin-bottom=[Set the margin for the bottom of buttons]:MARGIN_BOTTOM:_default' \
+'-d+[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS:_default' \
+'--delay-command-ms=[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS:_default' \
+'-f+[Close the menu on lost focus]:CLOSE_ON_LOST_FOCUS:(true false)' \
+'--close-on-lost-focus=[Close the menu on lost focus]:CLOSE_ON_LOST_FOCUS:(true false)' \
+'-k+[Show the associated key binds]:SHOW_KEYBINDS:(true false)' \
+'--show-keybinds=[Show the associated key binds]:SHOW_KEYBINDS:(true false)' \
 '-p+[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
 '--protocol=[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
+'-x+[Hide version information]:NO_VERSION_INFO:(true false)' \
+'--no-version-info=[Hide version information]:NO_VERSION_INFO:(true false)' \
 '-v[]' \
 '--version[]' \
-'-f[Close the menu on lost focus]' \
-'--close-on-lost-focus[Close the menu on lost focus]' \
-'-k[Show the associated key binds]' \
-'--show-keybinds[Show the associated key binds]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0

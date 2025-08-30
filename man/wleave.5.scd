@@ -6,11 +6,12 @@ wleave - layout file and options
 
 # LAYOUT
 
-wleave's buttons can consist of upto six values
+wleave buttons can have the following properties
 - label 
 - action
 - text
 - keybind
+- icon
 - height \*
 - width \* 
 - circular \*
@@ -21,7 +22,7 @@ Label is the css selector by which the buttons may be referred to in a *style.cs
 
 # FILE
 
-The buttons values are specified in a JSON formatted file, wherein the values are used as keys and one button corresponds to one JSON object for example:
+The buttons values are specified in a JSON-like formatted file, wherein the values are used as keys and one button corresponds to one JSON object for example:
 ```
 {
     "label" : "foo",
@@ -42,4 +43,5 @@ Rewrite by Natty <natty.sh.git@gmail.com>, see <https://github.com/AMNatty/wleav
 
 # SEE ALSO
 
+*wleave.json*(5)
 *wleave*(1)
