@@ -1,9 +1,10 @@
 mod button;
 mod config;
+mod paintable;
 
 use clap::Parser;
 use glib::clone;
-use miette::{Diagnostic, NamedSource, SourceOffset, miette};
+use miette::{Diagnostic, NamedSource, SourceOffset};
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
@@ -15,6 +16,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::button::WButton;
 use crate::config::{AppConfig, load_config, load_css, merge_with_args};
+use crate::paintable::svg_picture_colorized;
 use gtk4::gdk::{Cursor, Display};
 use gtk4::glib::{Propagation, timeout_add_local_once};
 use gtk4::{ApplicationWindow, GestureClick, PropagationPhase};
@@ -100,89 +102,6 @@ fn handle_key(
     }
 
     Propagation::Proceed
-}
-
-fn rasterize_svg_picture(icon: &str, button: &gtk4::Button) -> miette::Result<gtk4::Picture> {
-    let mut handle = rsvg::Loader::new()
-        .read_path(icon)
-        .map_err(|e| miette!("Failed to read SVG: {}", e))?;
-
-    let current_color = button.color();
-    let color_str = current_color.to_string();
-
-    handle
-        .set_stylesheet(&format!(
-            r#"
-            svg {{
-                color: {color_str} !important;
-            }}
-        "#
-        ))
-        .map_err(|e| miette!("Failed to set stylesheet for SVG while loading: {}", e))?;
-
-    let renderer = rsvg::CairoRenderer::new(&handle);
-
-    let (width, height) = if let Some((w, h)) = renderer.intrinsic_size_in_pixels() {
-        (w.ceil(), h.ceil())
-    } else {
-        (256.0, 256.0)
-    };
-
-    let surface = cairo::ImageSurface::create(cairo::Format::ARgb32, width as i32, height as i32)
-        .map_err(|e| miette!("Failed to create a Cairo surface: {}", e))?;
-
-    let ctx = cairo::Context::new(&surface)
-        .map_err(|e| miette!("Failed to create a Cairo context: {}", e))?;
-
-    renderer
-        .render_document(&ctx, &cairo::Rectangle::new(0.0, 0.0, width, height))
-        .map_err(|e| miette!("Failed to render SVG: {}", e))?;
-
-    drop(renderer);
-    drop(ctx);
-
-    let data = surface
-        .take_data()
-        .map_err(|e| miette!("Failed to take Cairo image data: {}", e))?;
-
-    let bytes = glib::Bytes::from(data.as_ref());
-
-    cfg_if::cfg_if! {
-        if #[cfg(target_endian = "little")] {
-            let format = gdk4::MemoryFormat::B8g8r8a8;
-        } else {
-            let format = gdk4::MemoryFormat::A8r8g8b8;
-        }
-    };
-
-    let texture = gdk4::MemoryTexture::new(
-        width as i32,
-        height as i32,
-        format,
-        &bytes,
-        4 * width as usize,
-    );
-
-    let paintable = gdk4::Paintable::from(texture);
-
-    let picture = gtk4::Picture::for_paintable(&paintable);
-
-    Ok(picture)
-}
-
-fn create_picture_from_icon(icon_path: &str, button: &gtk4::Button) -> gtk4::Picture {
-    let picture = if icon_path.ends_with(".svg") {
-        rasterize_svg_picture(icon_path, button).unwrap_or_else(|e| {
-            error!("Failed to load image as SVG: {}", e);
-            gtk4::Picture::for_filename(icon_path)
-        })
-    } else {
-        gtk4::Picture::for_filename(icon_path)
-    };
-
-    picture.set_content_fit(gtk4::ContentFit::ScaleDown);
-    picture.add_css_class("icon-dropshadow");
-    picture
 }
 
 fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
@@ -295,7 +214,15 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
             .build();
 
         let picture = if let Some(icon) = &bttn.icon {
-            let picture = create_picture_from_icon(icon, &button);
+            let picture = if icon.ends_with(".svg") {
+                svg_picture_colorized(icon).upcast()
+            } else {
+                gtk4::Picture::for_filename(icon)
+            };
+
+            picture.set_content_fit(gtk4::ContentFit::ScaleDown);
+            picture.add_css_class("icon-dropshadow");
+
             inner.insert_child_after(&picture, Option::<&gtk4::Widget>::None);
             Some(picture)
         } else {

@@ -2569,7 +2569,7 @@ dependencies = [
 
 [[package]]
 name = "wleave"
-version = "0.6.0"
+version = "0.6.2"
 dependencies = [
  "cairo-rs",
  "cfg-if",

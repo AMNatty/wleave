@@ -3,12 +3,13 @@
  * Or use your own colors. Both work, but using your own colors may break the automatic light/dark theme function.
  */
 
+
 window {
     background-color: rgba(12, 12, 12, 0.8);
 }
 
 button {
-    color: var(--view-fg-color);
+    color: oklab(from var(--view-fg-color) var(--standalone-color-oklab));
     background-color: var(--view-bg-color);
     border: none;
     padding: 10px;
@@ -27,43 +28,36 @@ button:hover label.keybind, button:focus label.keybind {
     opacity: 1;
 }
 
-button picture {
-    color: var(--view-fg-color);
-}
-
 button:focus,
 button:hover {
-    background-color: var(--accent-bg-color);
+    background-color: color-mix(in srgb, var(--accent-bg-color), var(--view-bg-color));
 }
 
 button:active {
-    background-color: var(--accent-color);
+    color: var(--accent-fg-color);
+    background-color: var(--accent-bg-color);
 }
 
-/**
- * Uncomment this for colorized icons.
- *
- * button#shutdown {
- *     color: #ff8d8d;
- * }
- *
- * button#hibernate {
- *     color: #a8c0ff;
- * }
- *
- * button#reboot {
- *     color: #84ffaa;
- * }
- *
- * button#lock {
- *     color: #f9e2af;
- * }
- *
- * button#logout {
- *     color: #f9c5af;
- * }
- *
- * button#suspend {
- *     color: #caaff9;
- * }
- */
+button#shutdown {
+    --view-fg-color: #ff8d8d;
+}
+
+button#hibernate {
+    --view-fg-color: #a8c0ff;
+}
+
+button#reboot {
+    --view-fg-color: #84ffaa;
+}
+
+button#lock {
+    --view-fg-color: #ffe8b6;
+}
+
+button#logout {
+    --view-fg-color: #ffcca8;
+}
+
+button#suspend {
+    --view-fg-color: #caaff9;
+}

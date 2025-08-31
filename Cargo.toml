@@ -1,6 +1,6 @@
 [package]
 name = "wleave"
-version = "0.6.0"
+version = "0.6.2"
 edition = "2024"
 license = "MIT"
 description = "A Wayland layer-shell logout prompt written in GTK"

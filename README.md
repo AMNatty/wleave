@@ -94,46 +94,11 @@ The stylesheet in `/etc/wleave/style.css` is fully customizable and can be edite
 
 ### Colorized icons
 
-Icon colors are *disabled by default* as they may be hard to read for light theme users.
+SVG icons are dynamically recolored if possible. <small>(since 0.6.2)</small>
 
 Each button has an identifier set in the layout file, which allows custom-styling each button
-one-by-one.
-
-Uncomment the following lines in the `/etc/wleave/style.css` CSS stylesheet to enable them:
-
-```css
-/*
- ... snip ...
- */
-
-button#shutdown {
-    color: #ff8d8d;
-}
-
-button#hibernate {
-    color: #a8c0ff;
-}
-
-button#reboot {
-    color: #84ffaa;
-}
-
-button#lock {
-    color: #f9e2af;
-}
-
-button#logout {
-    color: #f9c5af;
-}
-
-button#suspend {
-    color: #caaff9;
-}
-
-/*
- ... snip ...
- */
-```
+one-by-one. Icon colors may be changed by modifying the CSS variable `--view-fg-color`,
+or by setting a custom `color` property entirely.
 
 ### Example recipe
 
@@ -145,7 +110,7 @@ window {
 }
 
 button {
-    color: var(--accent-color);
+    color: var(--view-fg-color);
     background-color: var(--view-bg-color);
     border: none;
     padding: 10px;
@@ -164,27 +129,17 @@ button:hover label.keybind, button:focus label.keybind {
     opacity: 1;
 }
 
-/*
- * This is a bit of a hack. 
- * The SVG color is computed only once at the beginning, 
- * so the accented color needs to be the initial one.
- */
-button:not(:focus):not(:hover) picture, button:not(:focus):not(:hover) label {
-    filter: saturate(0);
-}
-
 button:hover,
 button:focus {
+    color: var(--accent-color);
     background-color: var(--window-bg-color);
 }
 
 button:active {
+    color: var(--accent-fg-color);
     background-color: var(--accent-bg-color);
 }
 
-button:active picture {
-    filter: brightness(2.0);
-}
 ```
 
 ## Keybinds reference
