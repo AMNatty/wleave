@@ -63,6 +63,7 @@ arguments.
     "delay-command-ms": 100,
     "close-on-lost-focus": true,
     "show-keybinds": true,
+    "no-version-info": true,
     "buttons": [
         {
             "label": "lock",
