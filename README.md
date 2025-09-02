@@ -54,6 +54,28 @@ configuration. The default configuration file can be copied from `/etc/wleave/la
 The new configuration system is more flexible as it removes the need for extra command-line
 arguments.
 
+From `man 5 wleave.json`, the allowed top-level options are:
+
+* `"buttons"` **(array)** - a list of buttons
+* `"css"` **(string)** - Specify a custom CSS file instead of the default one
+* `"buttons-per-row": "3"` **(string)** Set the number of buttons per row, or use a fraction to specify the number
+  of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)
+* `"column-spacing": 8` **(number)** Set space between buttons columns
+* `"row-spacing": 8` **(number)** Set space between buttons rows
+* `"margin": 200` **(number)** Set margin on all sides
+* `"margin-left"` **(number)** Set margin for left of buttons. Falls back to the value set by *margin*
+* `"margin-right"` **(number)** Set margin for right of buttons. Falls back to the value set by *margin*
+* `"margin-top"` **(number)** Set margin for top of buttons. Falls back to the value set by *margin*
+* `"margin-bottom"` **(number)** Set margin for bottom of buttons. Falls back to the value set by *margin*
+* `"close-on-lost-focus": false` **(boolean)** Closes the menu if focus is lost
+* `"show-keybinds": false`: **(boolean)** Show the associated key binds for each button
+* `"protocol": "layer-shell"` (**"layer-shell"**/**"xdg"**) Backend to use for full-screening the menu
+* `"no-version-info": false` **(boolean)** Hides the version label.
+* `"delay-command-ms": 100` **(number)** The number of milliseconds to wait after an action before the associated
+  command is executed
+
+The command-line option counterparts of these options take precedence over the configuration file.
+
 *Example configuration* with one button that executes `swaylock` on click:
 
 ```json

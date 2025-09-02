@@ -57,17 +57,15 @@ Falls back to the value set by *margin*
 *Default*: false
 
 *"protocol"*: <*"layer-shell"*/*"xdg"*>
-	Takes either layer-shell or xdg.
-	The layer-shell allows transparency effects; however, only a few compositors correctly support it.
-	The xdg protocol will work on almost all compositors, but does not allow for transparency.++
+	The layer-shell protocol is the intended protocol to be used with wleave, however it requires compositor support ++
 *Default*: "layer-shell"
 
 *"no-version-info"*: <*true*/*false*>
-	Hides the version label.++
+	Hides the version label ++
 *Default*: false
 
 *"delay-command-ms"*: <number>
-	The number of milliseconds to wait after an action before the associated command is executed.++
+	The number of milliseconds to wait after an action before the associated command is executed ++
 *Default*: 100
 
 # LAYOUT
@@ -82,8 +80,6 @@ wleave buttons may have the following properties:
 - *"height"* (*optional*, number) - value in the range 0.0 to 1.0 to override the placement of the label in the button
 - *"width"* (*optional*, number) - value in the range 0.0 to 1.0 to override the placement of the label in the button
 - *"circular"* (*optional*, boolean, default false)
-
-\* Optional values
 
 # FILE
 
