@@ -9,6 +9,7 @@ use std::{
 };
 
 #[derive(Debug, Copy, Clone, Default, ValueEnum, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum Protocol {
     #[default]
     LayerShell,
