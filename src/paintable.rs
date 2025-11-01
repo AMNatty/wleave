@@ -65,6 +65,14 @@ impl ObjectImpl for PicturePaintableImpl {
 
 impl PicturePaintableImpl {
     fn draw(&self, width: f64, height: f64) {
+        let scale = self
+            .widget
+            .borrow()
+            .as_ref()
+            .map(|w| w.scale_factor() as f64)
+            .unwrap_or(1.0);
+        let height = height * scale;
+        let width = width * scale;
         let mut tex_borrow = self.texture.borrow_mut();
         if tex_borrow.is_some() {
             return;
@@ -177,7 +185,7 @@ impl PaintableImpl for PicturePaintableImpl {
         let renderer = rsvg::CairoRenderer::new(handle_ref);
         let size = renderer
             .intrinsic_size_in_pixels()
-            .map(|(w, _)| w.ceil() as i32);
+            .map(|(_, h)| h.ceil() as i32);
 
         size.unwrap_or(256)
     }
