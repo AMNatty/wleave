@@ -5,7 +5,7 @@ mod paintable;
 use clap::Parser;
 use glib::clone;
 use miette::{Diagnostic, NamedSource, SourceOffset};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
