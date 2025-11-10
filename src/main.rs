@@ -270,7 +270,7 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
         grid.attach(&button, x as i32, y as i32, 1, 1);
     }
 
-    container_box.insert_child_after(&grid, Option::<&gtk4::Widget>::None);
+    container_box.append(&grid);
 
     if !config.no_version_info {
         let version_info = gtk4::Label::builder()
@@ -283,7 +283,7 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
         .css_classes(["dimmed", "version-info"])
         .margin_top(12)
         .build();
-        container_box.insert_child_after(&version_info, Some(&grid));
+        container_box.append(&version_info);
     }
 
     window.present();
