@@ -23,7 +23,7 @@ _wleave() {
 
     case "${cmd}" in
         wleave)
-            opts="-v -l -C -b -c -r -m -L -R -T -B -d -f -k -p -x -h --version --layout --css --buttons-per-row --column-spacing --row-spacing --margin --margin-left --margin-right --margin-top --margin-bottom --delay-command-ms --close-on-lost-focus --show-keybinds --protocol --no-version-info --help"
+            opts="-v -l -C -b -c -r -m -L -R -T -B -A -d -f -k -p -x -h --version --layout --css --buttons-per-row --column-spacing --row-spacing --margin --margin-left --margin-right --margin-top --margin-bottom --button-aspect-ratio --delay-command-ms --close-on-lost-focus --show-keybinds --protocol --no-version-info --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -106,6 +106,14 @@ _wleave() {
                     return 0
                     ;;
                 -B)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --button-aspect-ratio)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -A)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

@@ -8,6 +8,7 @@ complete -c wleave -s L -l margin-left -d 'Set margin for the left of buttons' -
 complete -c wleave -s R -l margin-right -d 'Set margin for the right of buttons' -r
 complete -c wleave -s T -l margin-top -d 'Set margin for the top of buttons' -r
 complete -c wleave -s B -l margin-bottom -d 'Set the margin for the bottom of buttons' -r
+complete -c wleave -s A -l button-aspect-ratio -d 'Set the aspect ratio of the buttons' -r
 complete -c wleave -s d -l delay-command-ms -d 'The delay (in milliseconds) between the window closing and executing the selected option' -r
 complete -c wleave -s f -l close-on-lost-focus -d 'Close the menu on lost focus' -r -f -a "true\t''
 false\t''"

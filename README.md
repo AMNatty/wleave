@@ -67,6 +67,8 @@ From `man 5 wleave.json`, the allowed top-level options are:
 * `"margin-right"` **(number)** Set margin for right of buttons. Falls back to the value set by *margin*
 * `"margin-top"` **(number)** Set margin for top of buttons. Falls back to the value set by *margin*
 * `"margin-bottom"` **(number)** Set margin for bottom of buttons. Falls back to the value set by *margin*
+* `"button-aspect-ratio"` **(string or number)** Set the aspect ratio of the buttons, either as a float (as a number or
+  string) or a ratio (e.g. "5/4"). If unspecified, the buttons fill all available space between the margins.
 * `"close-on-lost-focus": false` **(boolean)** Closes the menu if focus is lost
 * `"show-keybinds": false`: **(boolean)** Show the associated key binds for each button
 * `"protocol": "layer-shell"` (**"layer-shell"**/**"xdg"**) Backend to use for full-screening the menu

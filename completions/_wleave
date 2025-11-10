@@ -35,6 +35,8 @@ _wleave() {
 '--margin-top=[Set margin for the top of buttons]:MARGIN_TOP:_default' \
 '-B+[Set the margin for the bottom of buttons]:MARGIN_BOTTOM:_default' \
 '--margin-bottom=[Set the margin for the bottom of buttons]:MARGIN_BOTTOM:_default' \
+'-A+[Set the aspect ratio of the buttons]:BUTTON_ASPECT_RATIO:_default' \
+'--button-aspect-ratio=[Set the aspect ratio of the buttons]:BUTTON_ASPECT_RATIO:_default' \
 '-d+[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS:_default' \
 '--delay-command-ms=[The delay (in milliseconds) between the window closing and executing the selected option]:DELAY_COMMAND_MS:_default' \
 '-f+[Close the menu on lost focus]' \

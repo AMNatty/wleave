@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use tracing::{Level, debug, enabled, error, info, warn};
-use wleave::cli_opt::{Args, ButtonLayout, Protocol};
+use wleave::cli_opt::{Args, AspectRatio, ButtonLayout, Protocol};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -23,6 +23,7 @@ pub struct AppConfig {
     pub column_spacing: u32,
     #[serde(default = "default_spacing")]
     pub row_spacing: u32,
+    pub button_aspect_ratio: Option<AspectRatio>,
     #[serde(default = "default_delay")]
     pub delay_command_ms: u32,
     #[serde(default)]
@@ -49,6 +50,7 @@ impl Default for AppConfig {
             margin: default_margin(),
             column_spacing: default_spacing(),
             row_spacing: default_spacing(),
+            button_aspect_ratio: None,
             delay_command_ms: default_delay(),
             protocol: Default::default(),
             buttons_per_row: Default::default(),
@@ -261,6 +263,19 @@ pub fn merge_with_args(config: &mut AppConfig, args: &Args) {
         info!(
             "\"row-spacing\" specified from config: {}",
             config.row_spacing
+        );
+    }
+
+    if let Some(aspect_ratio) = args.button_aspect_ratio {
+        info!(
+            "\"button-aspect-ratio\" specified from args: {}",
+            aspect_ratio
+        );
+        config.button_aspect_ratio = Some(aspect_ratio);
+    } else {
+        info!(
+            "\"button-aspect-ratio\" specified from config: {:?}",
+            config.button_aspect_ratio
         );
     }
 

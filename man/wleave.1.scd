@@ -46,6 +46,10 @@ wleave - A Wayland logout menu
 *-B, --margin-bottom* <padding>
 	Set margin for bottom of buttons
 
+*-A, --button-aspect-ratio* <ratio>
+	Set the aspect ratio of the buttons, either as a float (as a number or string) or a ratio (e.g. "5/4").
+	If unspecified, the buttons fill all available space between the margins.
+
 *-f, --close-on-lost-focus*
 	Closes the menu if focus is lost
 

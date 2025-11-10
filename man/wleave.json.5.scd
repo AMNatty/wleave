@@ -48,6 +48,10 @@ Falls back to the value set by *margin*
 	Set margin for bottom of buttons ++
 Falls back to the value set by *margin*
 
+*"button-aspect-ratio"* <string or number>
+	Set the aspect ratio of the buttons, either as a float (as a number or string) or a ratio (e.g. "5/4"). ++
+If unspecified, the buttons fill all available space between the margins.
+
 *"close-on-lost-focus"*: <*true*/*false*>
 	Closes the menu if focus is lost ++
 *Default*: false

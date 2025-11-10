@@ -116,7 +116,6 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
     let window = ApplicationWindow::builder()
         .application(app)
         .title("wleave")
-        .child(&container_box)
         .build();
 
     match config.protocol {
@@ -170,7 +169,10 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
     window.add_controller(key_controller);
 
     let grid = gtk4::Grid::new();
+    grid.set_column_homogeneous(true);
+    grid.set_row_homogeneous(true);
     grid.set_column_spacing(config.column_spacing);
+    grid.set_vexpand(true);
     grid.set_row_spacing(config.row_spacing);
 
     let btn_count = config.buttons.len() as u32;
@@ -178,6 +180,20 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
         ButtonLayout::PerRow(n) => n,
         ButtonLayout::RowRatio(n, d) => btn_count * n / d.min(btn_count * n),
     };
+
+    if let Some(ratio) = config.button_aspect_ratio {
+        let rows = btn_count.div_ceil(buttons_per_row);
+        let frame = gtk4::AspectFrame::builder()
+            .ratio(ratio.as_float() * (buttons_per_row as f32) / (rows as f32))
+            .hexpand(true)
+            .vexpand(true)
+            .obey_child(false)
+            .child(&container_box)
+            .build();
+        window.set_child(Some(&frame));
+    } else {
+        window.set_child(Some(&container_box));
+    }
 
     for (i, bttn) in config.buttons.iter().enumerate() {
         let justify = match bttn.justify.as_str() {
