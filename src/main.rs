@@ -1,5 +1,6 @@
 mod button;
 mod config;
+mod layout;
 mod paintable;
 
 use clap::Parser;
@@ -16,14 +17,15 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::button::WButton;
 use crate::config::{AppConfig, load_config, load_css, merge_with_args};
+use crate::layout::LayoutWleaveMenu;
 use crate::paintable::svg_picture_colorized;
 use gtk4::gdk::{Cursor, Display};
 use gtk4::glib::{Propagation, timeout_add_local_once};
-use gtk4::{ApplicationWindow, GestureClick, PropagationPhase};
 use gtk4::{EventControllerKey, prelude::*};
+use gtk4::{GestureClick, PropagationPhase};
 use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use thiserror::Error;
-use wleave::cli_opt::{Args, ButtonLayout, Protocol};
+use wleave::cli_opt::{Args, AspectRatio, ButtonLayout, Protocol};
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum WError {
@@ -50,7 +52,7 @@ fn run_command(command: &str) {
     }
 }
 
-fn on_option(command: &str, delay_ms: u32, window: ApplicationWindow) {
+fn on_option(command: &str, delay_ms: u32, window: libadwaita::ApplicationWindow) {
     window.connect_hide(clone!(
         #[to_owned]
         command,
@@ -67,7 +69,7 @@ fn on_option(command: &str, delay_ms: u32, window: ApplicationWindow) {
                     window,
                     move || {
                         run_command(&command);
-                        window.inspect(ApplicationWindow::close);
+                        window.inspect(libadwaita::ApplicationWindow::close);
                     }
                 ),
             );
@@ -79,7 +81,7 @@ fn on_option(command: &str, delay_ms: u32, window: ApplicationWindow) {
 
 fn handle_key(
     config: &Arc<AppConfig>,
-    window: &ApplicationWindow,
+    window: &libadwaita::ApplicationWindow,
     key: &gtk4::gdk::Key,
 ) -> Propagation {
     if let &gtk4::gdk::Key::Escape = key {
@@ -105,7 +107,9 @@ fn handle_key(
 }
 
 fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
-    let container_box = gtk4::Box::builder()
+    let container_box = gtk4::CenterBox::builder()
+        .valign(gtk4::Align::Fill)
+        .halign(gtk4::Align::Fill)
         .orientation(gtk4::Orientation::Vertical)
         .margin_top(config.margin_top.unwrap_or(config.margin))
         .margin_bottom(config.margin_bottom.unwrap_or(config.margin))
@@ -113,9 +117,11 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
         .margin_end(config.margin_right.unwrap_or(config.margin))
         .build();
 
-    let window = ApplicationWindow::builder()
+    let window = libadwaita::ApplicationWindow::builder()
         .application(app)
         .title("wleave")
+        .content(&container_box)
+        .decorated(false)
         .build();
 
     match config.protocol {
@@ -169,12 +175,15 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
     ));
     window.add_controller(key_controller);
 
-    let grid = gtk4::Grid::new();
-    grid.set_column_homogeneous(true);
-    grid.set_row_homogeneous(true);
-    grid.set_column_spacing(config.column_spacing);
-    grid.set_vexpand(true);
-    grid.set_row_spacing(config.row_spacing);
+    let buttons_container = gtk4::Box::builder()
+        .valign(gtk4::Align::Fill)
+        .halign(gtk4::Align::Fill)
+        .layout_manager(&LayoutWleaveMenu::new(
+            config.button_aspect_ratio.map(AspectRatio::as_float),
+            config.column_spacing,
+            config.row_spacing,
+        ))
+        .build();
 
     let btn_count = config.buttons.len() as u32;
     let buttons_per_row = match config.buttons_per_row {
@@ -182,21 +191,7 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
         ButtonLayout::RowRatio(n, d) => btn_count * n / d.min(btn_count * n),
     };
 
-    if let Some(ratio) = config.button_aspect_ratio {
-        let rows = btn_count.div_ceil(buttons_per_row);
-        let frame = gtk4::AspectFrame::builder()
-            .ratio(ratio.as_float() * (buttons_per_row as f32) / (rows as f32))
-            .hexpand(true)
-            .vexpand(true)
-            .obey_child(false)
-            .child(&container_box)
-            .build();
-        window.set_child(Some(&frame));
-    } else {
-        window.set_child(Some(&container_box));
-    }
-
-    for (i, bttn) in config.buttons.iter().enumerate() {
+    for bttn in config.buttons.iter() {
         let justify = match bttn.justify.as_str() {
             "center" => gtk4::Justification::Center,
             "fill" => gtk4::Justification::Fill,
@@ -212,7 +207,7 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
             .cursor(&Cursor::from_name("pointer", None).expect("pointer cursor not found"))
             .build();
 
-        let overlay = gtk4::Overlay::new();
+        let overlay = gtk4::Overlay::builder().vexpand(true).hexpand(true).build();
 
         if config.show_keybinds {
             let key_label = gtk4::Label::builder()
@@ -264,8 +259,6 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
 
         overlay.set_child(Some(&inner));
 
-        button.set_child(Some(&overlay));
-
         if bttn.circular {
             button.add_css_class("circular");
         }
@@ -281,13 +274,13 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
             move |_| on_option(&action, delay_ms, window)
         ));
 
-        let x = i as u32 % buttons_per_row;
-        let y = i as u32 / buttons_per_row;
+        button.set_child(Some(&overlay));
 
-        grid.attach(&button, x as i32, y as i32, 1, 1);
+        buttons_container.append(&button);
     }
 
-    container_box.append(&grid);
+    container_box.set_shrink_center_last(false);
+    container_box.set_center_widget(Some(&buttons_container));
 
     if !config.no_version_info {
         let version_info = gtk4::Label::builder()
@@ -300,7 +293,7 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
         .css_classes(["dimmed", "version-info"])
         .margin_top(12)
         .build();
-        container_box.append(&version_info);
+        container_box.set_end_widget(Some(&version_info));
     }
 
     window.present();
