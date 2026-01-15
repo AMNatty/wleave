@@ -142,11 +142,11 @@ _wleave() {
                     return 0
                     ;;
                 --protocol)
-                    COMPREPLY=($(compgen -W "layer-shell xdg" -- "${cur}"))
+                    COMPREPLY=($(compgen -W "layer-shell none xdg" -- "${cur}"))
                     return 0
                     ;;
                 -p)
-                    COMPREPLY=($(compgen -W "layer-shell xdg" -- "${cur}"))
+                    COMPREPLY=($(compgen -W "layer-shell none xdg" -- "${cur}"))
                     return 0
                     ;;
                 --no-version-info)

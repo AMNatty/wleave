@@ -43,8 +43,8 @@ _wleave() {
 '--close-on-lost-focus=[Close the menu on lost focus]' \
 '-k+[Show the associated key binds]' \
 '--show-keybinds=[Show the associated key binds]' \
-'-p+[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
-'--protocol=[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell xdg)' \
+'-p+[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell none xdg)' \
+'--protocol=[Use layer-shell or xdg protocol]:PROTOCOL:(layer-shell none xdg)' \
 '-x+[Hide version information]' \
 '--no-version-info=[Hide version information]' \
 '-v[]' \

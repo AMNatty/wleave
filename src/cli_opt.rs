@@ -14,6 +14,7 @@ use std::{
 pub enum Protocol {
     #[default]
     LayerShell,
+    None,
     Xdg,
 }
 
@@ -119,10 +120,10 @@ impl FromStr for ButtonLayout {
             return Ok(ButtonLayout::PerRow(per_row.into()));
         }
 
-        if let Some((n, d)) = s.split_once("/") {
-            if let (Ok(n), Ok(d)) = (n.parse::<NonZeroU32>(), d.parse::<NonZeroU32>()) {
-                return Ok(ButtonLayout::RowRatio(n.into(), d.into()));
-            }
+        if let Some((n, d)) = s.split_once("/")
+            && let (Ok(n), Ok(d)) = (n.parse::<NonZeroU32>(), d.parse::<NonZeroU32>())
+        {
+            return Ok(ButtonLayout::RowRatio(n.into(), d.into()));
         }
 
         Err("Value neither a number (1, 2, 3) nor a ratio (1/1, 2/3, ...)".into())
@@ -161,7 +162,9 @@ impl<'de> Deserialize<'de> for AspectRatio {
         } else if let Some(s) = v.as_str() {
             FromStr::from_str(s).map_err(serde::de::Error::custom)
         } else {
-            Err(serde::de::Error::custom("Aspect ratio neither a positive float nor a ratio (1/1, 2/3, ...)"))
+            Err(serde::de::Error::custom(
+                "Aspect ratio neither a positive float nor a ratio (1/1, 2/3, ...)",
+            ))
         }
     }
 }

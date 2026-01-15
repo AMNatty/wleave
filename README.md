@@ -71,7 +71,7 @@ From `man 5 wleave.json`, the allowed top-level options are:
   string) or a ratio (e.g. "5/4"). If unspecified, the buttons fill all available space between the margins.
 * `"close-on-lost-focus": false` **(boolean)** Closes the menu if focus is lost
 * `"show-keybinds": false`: **(boolean)** Show the associated key binds for each button
-* `"protocol": "layer-shell"` (**"layer-shell"**/**"xdg"**) Backend to use for full-screening the menu
+* `"protocol": "layer-shell"` (**"layer-shell"**/**"xdg"**/**"none"**) Backend to use for full-screening the menu
 * `"no-version-info": false` **(boolean)** Hides the version label.
 * `"delay-command-ms": 100` **(number)** The number of milliseconds to wait after an action before the associated
   command is executed
@@ -82,20 +82,20 @@ The command-line option counterparts of these options take precedence over the c
 
 ```json
 {
-    "margin": 200,
-    "buttons-per-row": "1/1",
-    "delay-command-ms": 100,
-    "close-on-lost-focus": true,
-    "show-keybinds": true,
-    "buttons": [
-        {
-            "label": "lock",
-            "action": "swaylock",
-            "text": "Lock",
-            "keybind": "l",
-            "icon": "/usr/share/wleave/icons/lock.svg"
-        }
-    ]
+  "margin": 200,
+  "buttons-per-row": "1/1",
+  "delay-command-ms": 100,
+  "close-on-lost-focus": true,
+  "show-keybinds": true,
+  "buttons": [
+    {
+      "label": "lock",
+      "action": "swaylock",
+      "text": "Lock",
+      "keybind": "l",
+      "icon": "/usr/share/wleave/icons/lock.svg"
+    }
+  ]
 }
 ```
 

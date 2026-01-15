@@ -57,7 +57,10 @@ wleave - A Wayland logout menu
 	Show the associated key binds for each button
 
 *-p, --protocol* <protocol>
-	Takes either layer-shell or xdg. The layer-shell allows transparency effects; however, only a few compositors correctly support it. The xdg protocol will work on almost all compositors, but does not allow for transparency.
+	Takes layer-shell, xdg, or none.
+	The "layer-shell" allows transparency effects; however, only a few compositors correctly support it.
+	The "xdg" protocol will work on almost all compositors, but does not allow for transparency.
+	The "none" option shows the window as is, without full-screening it
 
 *-d, --delay-command-ms* <number>
 	The number of milliseconds to wait after an action before the associated command is executed

@@ -134,6 +134,7 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
         Protocol::Xdg => {
             window.fullscreen();
         }
+        Protocol::None => {}
     }
 
     if config.close_on_lost_focus {

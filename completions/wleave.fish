@@ -15,6 +15,7 @@ false\t''"
 complete -c wleave -s k -l show-keybinds -d 'Show the associated key binds' -r -f -a "true\t''
 false\t''"
 complete -c wleave -s p -l protocol -d 'Use layer-shell or xdg protocol' -r -f -a "layer-shell\t''
+none\t''
 xdg\t''"
 complete -c wleave -s x -l no-version-info -d 'Hide version information' -r -f -a "true\t''
 false\t''"

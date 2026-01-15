@@ -60,7 +60,7 @@ If unspecified, the buttons fill all available space between the margins.
 	Show the associated key binds for each button ++
 *Default*: false
 
-*"protocol"*: <*"layer-shell"*/*"xdg"*>
+*"protocol"*: <*"layer-shell"*/*"xdg"*/*"none"*>
 	The layer-shell protocol is the intended protocol to be used with wleave, however it requires compositor support ++
 *Default*: "layer-shell"
 
