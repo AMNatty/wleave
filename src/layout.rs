@@ -1,130 +1,197 @@
-use gdk4::prelude::ObjectExt;
-use gdk4::subclass::prelude::DerivedObjectProperties;
-use glib::subclass::object::ObjectImpl;
-use glib::subclass::types::ObjectSubclass;
-use glib_macros::Properties;
-use gtk4::prelude::WidgetExt;
-use gtk4::subclass::layout_manager::LayoutManagerImpl;
-use std::cell::{Cell, RefCell};
-use tracing::instrument;
+use crate::layout::menu_layout::LayoutMenuImpl;
+use crate::layout::menu_layout_child::MenuLayoutChildImpl;
+use glib::object::Cast;
+use gtk4::prelude::{LayoutManagerExt, WidgetExt};
+use libadwaita::gtk;
+use tracing::info;
 
-#[derive(Properties, Default)]
-#[properties(wrapper_type = LayoutWleaveMenu)]
-pub struct LayoutWleaveMenuImpl {
-    #[property(name = "aspect-ratio", get, set)]
-    aspect_ratio: Cell<f64>,
-    #[property(name = "aspect-ratio-set", get, set)]
-    aspect_ratio_set: Cell<bool>,
-    #[property(name = "column-spacing", get, set)]
-    column_spacing: Cell<f64>,
-    #[property(name = "row-spacing", get, set)]
-    row_spacing: Cell<f64>,
-    layout_strategy: RefCell<MenuLayout>,
-}
+mod menu_layout_child {
+    use gdk4::prelude::ObjectExt;
+    use glib::subclass::object::{DerivedObjectProperties, ObjectImpl};
+    use glib::subclass::types::ObjectSubclass;
+    use glib_macros::Properties;
+    use gtk4::subclass::layout_child::LayoutChildImpl;
+    use std::cell::Cell;
 
-#[glib::object_subclass]
-impl ObjectSubclass for LayoutWleaveMenuImpl {
-    const NAME: &'static str = "WleaveLayoutAspect";
+    #[derive(Properties, Default)]
+    #[properties(wrapper_type = super::MenuLayoutChild)]
+    pub struct MenuLayoutChildImpl {
+        #[property(
+            name = "placement",
+            get,
+            set,
+            builder(super::MenuLayoutChildPlacement::default())
+        )]
+        pub placement: Cell<super::MenuLayoutChildPlacement>,
+        #[property(name = "grid-x", get, set)]
+        pub grid_x: Cell<u32>,
+        #[property(name = "grid-y", get, set)]
+        pub grid_y: Cell<u32>,
+    }
 
-    type Type = LayoutWleaveMenu;
+    #[glib::object_subclass]
+    impl ObjectSubclass for MenuLayoutChildImpl {
+        const NAME: &'static str = "MenuLayoutChild";
 
-    type ParentType = gtk4::LayoutManager;
+        type Type = super::MenuLayoutChild;
 
-    type Interfaces = ();
+        type ParentType = gtk4::LayoutChild;
+
+        type Interfaces = ();
+    }
+
+    #[glib::derived_properties]
+    impl ObjectImpl for MenuLayoutChildImpl {}
+
+    impl LayoutChildImpl for MenuLayoutChildImpl {}
 }
 
 glib::wrapper! {
-    pub struct LayoutWleaveMenu(ObjectSubclass<LayoutWleaveMenuImpl>)
+    pub struct MenuLayoutChild(ObjectSubclass<MenuLayoutChildImpl>)
+        @extends gtk4::LayoutChild;
+}
+
+impl MenuLayoutChild {
+    fn new(
+        manager: &MenuLayout,
+        child: &gtk4::Widget,
+        placement: MenuLayoutChildPlacement,
+    ) -> MenuLayoutChild {
+        glib::Object::builder()
+            .property("layout-manager", manager)
+            .property("child-widget", child)
+            .property("placement", placement)
+            .build()
+    }
+}
+
+#[derive(Default, Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, glib::Enum)]
+#[enum_type(name = "MenuLayoutChildPlacement")]
+pub enum MenuLayoutChildPlacement {
+    #[default]
+    Unknown,
+    Grid,
+}
+
+mod menu_layout {
+    use crate::layout::{MenuLayoutChild, MenuLayoutChildPlacement, MenuLayoutProvider};
+    use gdk4::prelude::ObjectExt;
+    use gdk4::subclass::prelude::DerivedObjectProperties;
+    use glib::object::Cast;
+    use glib::property::PropertyGet;
+    use glib::subclass::object::ObjectImpl;
+    use glib::subclass::prelude::ObjectSubclassExt;
+    use glib::subclass::types::ObjectSubclass;
+    use glib::types::StaticType;
+    use glib_macros::Properties;
+    use gtk4::prelude::WidgetExt;
+    use gtk4::subclass::layout_manager::LayoutManagerImpl;
+    use std::cell::{Cell, RefCell};
+    use tracing::instrument;
+
+    #[derive(Properties, Default)]
+    #[properties(wrapper_type = super::MenuLayout)]
+    pub struct LayoutMenuImpl {
+        #[property(name = "aspect-ratio", get, set)]
+        aspect_ratio: Cell<f64>,
+        #[property(name = "aspect-ratio-set", get, set)]
+        aspect_ratio_set: Cell<bool>,
+        #[property(name = "column-spacing", get, set)]
+        column_spacing: Cell<f64>,
+        #[property(name = "row-spacing", get, set)]
+        row_spacing: Cell<f64>,
+        layout_strategy: RefCell<MenuLayoutProvider>,
+    }
+
+    #[glib::object_subclass]
+    impl ObjectSubclass for LayoutMenuImpl {
+        const NAME: &'static str = "MenuLayout";
+
+        type Type = super::MenuLayout;
+
+        type ParentType = gtk4::LayoutManager;
+
+        type Interfaces = ();
+    }
+
+    #[glib::derived_properties]
+    impl ObjectImpl for LayoutMenuImpl {}
+
+    impl LayoutManagerImpl for LayoutMenuImpl {
+        #[instrument(skip(self, widget))]
+        fn allocate(&self, widget: &gtk4::Widget, width: i32, height: i32, baseline: i32) {
+            {
+                let mut layout = self.layout_strategy.borrow_mut();
+
+                layout.column_spacing = self.column_spacing.get();
+                layout.row_spacing = self.row_spacing.get();
+                layout.aspect_ratio = self.aspect_ratio_set.get().then(|| self.aspect_ratio.get());
+            }
+
+            let mut layout = self.layout_strategy.borrow();
+
+            let mut curr = widget.first_child();
+            let children = std::iter::from_fn(|| {
+                let it = curr.take()?;
+                curr = it.next_sibling();
+                Some(it)
+            })
+            .collect::<Vec<_>>();
+
+            layout.allocate(&self.obj(), &children, width, height, baseline);
+        }
+
+        fn create_layout_child(
+            &self,
+            _widget: &gtk4::Widget,
+            for_child: &gtk4::Widget,
+        ) -> gtk4::LayoutChild {
+            MenuLayoutChild::new(
+                &self.obj(),
+                for_child,
+                match self.layout_strategy.borrow().strategy {
+                    super::MenuLayoutStrategy::Grid => MenuLayoutChildPlacement::Grid,
+                },
+            )
+            .upcast()
+        }
+
+        fn layout_child_type() -> Option<glib::Type> {
+            Some(MenuLayoutChild::static_type())
+        }
+
+        fn request_mode(&self, _widget: &gtk4::Widget) -> gtk4::SizeRequestMode {
+            gtk4::SizeRequestMode::HeightForWidth
+        }
+
+        #[instrument(skip(self, widget))]
+        fn measure(
+            &self,
+            widget: &gtk4::Widget,
+            orientation: gtk4::Orientation,
+            for_size: i32,
+        ) -> (i32, i32, i32, i32) {
+            let mut curr = widget.first_child();
+            let children = std::iter::from_fn(|| {
+                let it = curr.take()?;
+                curr = it.next_sibling();
+                Some(it)
+            })
+            .collect::<Vec<_>>();
+
+            let layout = self.layout_strategy.borrow();
+
+            layout.measure(&self.obj(), &children, orientation, for_size)
+        }
+    }
+}
+
+glib::wrapper! {
+    pub struct MenuLayout(ObjectSubclass<LayoutMenuImpl>)
         @extends gtk4::LayoutManager;
 }
 
-#[glib::derived_properties]
-impl ObjectImpl for LayoutWleaveMenuImpl {}
-
-impl LayoutManagerImpl for LayoutWleaveMenuImpl {
-    #[instrument(skip(self, widget))]
-    fn allocate(&self, widget: &gtk4::Widget, width: i32, height: i32, baseline: i32) {
-        let mut layout = self.layout_strategy.borrow_mut();
-
-        layout.column_spacing = self.column_spacing.get();
-        layout.row_spacing = self.row_spacing.get();
-        layout.aspect_ratio = self.aspect_ratio_set.get().then(|| self.aspect_ratio.get());
-
-        let mut curr = widget.first_child();
-        let children = std::iter::from_fn(|| {
-            let it = curr.take()?;
-            curr = it.next_sibling();
-            Some(it)
-        })
-        .collect::<Vec<_>>();
-
-        layout.allocate(&children, width, height, baseline);
-    }
-
-    fn request_mode(&self, _widget: &gtk4::Widget) -> gtk4::SizeRequestMode {
-        gtk4::SizeRequestMode::HeightForWidth
-    }
-
-    #[instrument(skip(self, widget))]
-    fn measure(
-        &self,
-        widget: &gtk4::Widget,
-        orientation: gtk4::Orientation,
-        for_size: i32,
-    ) -> (i32, i32, i32, i32) {
-        let (mut min, mut nat, mut min_baseline, mut nat_baseline) = (0, 0, -1, -1);
-
-        let mut curr = widget.first_child();
-
-        while let Some(child) = curr {
-            curr = child.next_sibling();
-
-            if !child.should_layout() {
-                continue;
-            }
-
-            let (c_min, c_nat, c_min_baseline, c_nat_baseline) =
-                child.measure(orientation, for_size);
-
-            min = c_min.max(min);
-            nat = c_nat.max(nat);
-
-            if c_min_baseline != -1 {
-                min_baseline = min_baseline.max(c_min_baseline);
-            }
-
-            if c_nat_baseline != -1 {
-                nat_baseline = nat_baseline.max(c_nat_baseline);
-            }
-        }
-
-        let aspect = self.aspect_ratio.get();
-
-        match (for_size, orientation) {
-            (-1, gtk4::Orientation::Horizontal) => {
-                let expected_width = widget.height() as f64 * aspect;
-                nat = nat.min(expected_width.round() as i32).max(min);
-            }
-            (-1, gtk4::Orientation::Vertical) => {
-                let expected_height = widget.width() as f64 / aspect;
-                nat = nat.min(expected_height.round() as i32).max(min);
-            }
-            (s, gtk4::Orientation::Horizontal) => {
-                let expected_width = s as f64 * aspect;
-                nat = nat.min(expected_width.round() as i32).max(min);
-            }
-            (s, gtk4::Orientation::Vertical) => {
-                let expected_height = s as f64 / aspect;
-                nat = nat.min(expected_height.round() as i32).max(min);
-            }
-            _ => {}
-        }
-
-        (min, nat, min_baseline, nat_baseline)
-    }
-}
-
-impl LayoutWleaveMenu {
+impl MenuLayout {
     pub fn new(
         ratio: Option<impl Into<f64>>,
         column_spacing: impl Into<f64>,
@@ -140,7 +207,7 @@ impl LayoutWleaveMenu {
 }
 
 #[derive(Default)]
-struct MenuLayout {
+struct MenuLayoutProvider {
     strategy: MenuLayoutStrategy,
     column_spacing: f64,
     row_spacing: f64,
@@ -148,13 +215,20 @@ struct MenuLayout {
 }
 
 #[derive(Default)]
-enum MenuLayoutStrategy {
+pub enum MenuLayoutStrategy {
     #[default]
     Grid,
 }
 
-impl MenuLayout {
-    fn allocate(&self, children: &[gtk4::Widget], width: i32, height: i32, baseline: i32) {
+impl MenuLayoutProvider {
+    fn allocate(
+        &self,
+        obj: &MenuLayout,
+        children: &[gtk4::Widget],
+        width: i32,
+        height: i32,
+        baseline: i32,
+    ) {
         if children.is_empty() {
             return;
         }
@@ -169,6 +243,9 @@ impl MenuLayout {
                 let mut cols = 1;
                 let mut b_width = 0.0;
                 let mut b_height = 0.0;
+
+                let u_width = width as usize;
+                let u_height = height as usize;
 
                 // Axis-aligned rectangle packing
                 // We brute-force the best layout, optimizing for max button area
@@ -186,10 +263,10 @@ impl MenuLayout {
 
                         let (w, h) = match self.aspect_ratio {
                             Some(aspect @ 1.0..) => {
-                                let mut w = (width as usize - (col_gaps * col_spacing)) as f64
+                                let mut w = u_width.saturating_sub(col_gaps * col_spacing) as f64
                                     / j_cols as f64
                                     * aspect;
-                                let h = ((height as usize - (row_gaps * row_spacing)) as f64
+                                let h = (u_height.saturating_sub(row_gaps * row_spacing) as f64
                                     / i_rows as f64)
                                     .min(w / aspect);
 
@@ -198,9 +275,9 @@ impl MenuLayout {
                                 (w, h)
                             }
                             Some(aspect @ ..1.0) => {
-                                let mut h = (height as usize - (row_gaps * row_spacing)) as f64
+                                let mut h = u_height.saturating_sub(row_gaps * row_spacing) as f64
                                     / i_rows as f64;
-                                let w = ((width as usize - (col_gaps * col_spacing)) as f64
+                                let w = (u_width.saturating_sub(col_gaps * col_spacing) as f64
                                     / j_cols as f64
                                     * aspect)
                                     .min(h * aspect);
@@ -211,9 +288,9 @@ impl MenuLayout {
                             }
                             //
                             Some(..) | None => {
-                                let w = (width as usize - (col_gaps * col_spacing)) as f64
+                                let w = u_width.saturating_sub(col_gaps * col_spacing) as f64
                                     / j_cols as f64;
-                                let h = (height as usize - (row_gaps * row_spacing)) as f64
+                                let h = u_height.saturating_sub(row_gaps * row_spacing) as f64
                                     / i_rows as f64;
 
                                 (w, h)
@@ -238,9 +315,21 @@ impl MenuLayout {
                     / 2.0;
 
                 for (i, child) in children.iter().enumerate() {
+                    let child_layout = obj
+                        .layout_child(child)
+                        .downcast::<MenuLayoutChild>()
+                        .expect("always MenuLayoutChild");
+
                     if child.should_layout() {
-                        let x_grid = (i % cols) as f64;
-                        let y_grid = (i / cols) as f64;
+                        let ix = i % cols;
+                        let iy = i / cols;
+
+                        child_layout.set_placement(MenuLayoutChildPlacement::Grid);
+                        child_layout.set_grid_x(ix as u32);
+                        child_layout.set_grid_y(iy as u32);
+
+                        let x_grid = ix as f64;
+                        let y_grid = iy as f64;
 
                         let x = base_x
                             + x_grid * b_width
@@ -260,5 +349,49 @@ impl MenuLayout {
                 }
             }
         }
+    }
+
+    fn measure(
+        &self,
+        _obj: &MenuLayout,
+        children: &[gtk4::Widget],
+        orientation: gtk4::Orientation,
+        for_size: i32,
+    ) -> (i32, i32, i32, i32) {
+        let gaps = match orientation {
+            gtk::Orientation::Vertical => self.row_spacing as i32,
+            gtk::Orientation::Horizontal => self.column_spacing as i32,
+            _ => 0,
+        };
+
+        let (mut min, mut nat) = (0, 0);
+
+        match self.strategy {
+            MenuLayoutStrategy::Grid => {
+                for (i, child) in children.iter().enumerate() {
+                    if !child.should_layout() {
+                        continue;
+                    }
+
+                    let (c_min, c_nat, _, _) = child.measure(orientation, for_size);
+
+                    min = min.max(c_min + gaps);
+                    nat = nat.max(c_nat + gaps);
+                }
+
+                // A bit of a messy heuristic
+                if matches!(orientation, gtk::Orientation::Horizontal) {
+                    min *= children.len() as i32;
+                    nat *= children.len() as i32;
+                } else {
+                    min *= children.len() as i32;
+                    min /= 2;
+                    nat *= children.len() as i32;
+                    nat /= 2;
+                }
+            }
+        }
+
+        (min, nat, -1, -1)
     }
 }

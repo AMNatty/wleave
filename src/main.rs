@@ -17,7 +17,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::button::WButton;
 use crate::config::{AppConfig, load_config, load_css, merge_with_args};
-use crate::layout::LayoutWleaveMenu;
+use crate::layout::MenuLayout;
 use crate::paintable::svg_picture_colorized;
 use gtk4::gdk::{Cursor, Display};
 use gtk4::glib::{Propagation, timeout_add_local_once};
@@ -178,7 +178,7 @@ fn app_main(config: &Arc<AppConfig>, app: &libadwaita::Application) {
     let buttons_container = gtk4::Box::builder()
         .valign(gtk4::Align::Fill)
         .halign(gtk4::Align::Fill)
-        .layout_manager(&LayoutWleaveMenu::new(
+        .layout_manager(&MenuLayout::new(
             config.button_aspect_ratio.map(AspectRatio::as_float),
             config.column_spacing,
             config.row_spacing,
