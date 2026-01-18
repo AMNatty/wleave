@@ -3,7 +3,6 @@ use crate::layout::menu_layout_child::MenuLayoutChildImpl;
 use glib::object::Cast;
 use gtk4::prelude::{LayoutManagerExt, WidgetExt};
 use libadwaita::gtk;
-use tracing::info;
 
 mod menu_layout_child {
     use gdk4::prelude::ObjectExt;
@@ -78,7 +77,6 @@ mod menu_layout {
     use gdk4::prelude::ObjectExt;
     use gdk4::subclass::prelude::DerivedObjectProperties;
     use glib::object::Cast;
-    use glib::property::PropertyGet;
     use glib::subclass::object::ObjectImpl;
     use glib::subclass::prelude::ObjectSubclassExt;
     use glib::subclass::types::ObjectSubclass;
@@ -128,7 +126,7 @@ mod menu_layout {
                 layout.aspect_ratio = self.aspect_ratio_set.get().then(|| self.aspect_ratio.get());
             }
 
-            let mut layout = self.layout_strategy.borrow();
+            let layout = self.layout_strategy.borrow();
 
             let mut curr = widget.first_child();
             let children = std::iter::from_fn(|| {
@@ -368,7 +366,7 @@ impl MenuLayoutProvider {
 
         match self.strategy {
             MenuLayoutStrategy::Grid => {
-                for (i, child) in children.iter().enumerate() {
+                for child in children.iter() {
                     if !child.should_layout() {
                         continue;
                     }

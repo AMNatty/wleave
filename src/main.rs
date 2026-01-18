@@ -15,7 +15,7 @@ use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use crate::button::WButton;
+use crate::button::{WButton, WButtonAction, WButtonActionHandler, WButtonActionList};
 use crate::config::{AppConfig, load_config, load_css, merge_with_args};
 use crate::layout::MenuLayout;
 use crate::paintable::svg_picture_colorized;
@@ -46,15 +46,34 @@ pub enum WError {
     CssReadError(PathBuf, glib::Error),
 }
 
-fn run_command(command: &str) {
-    if let Err(e) = Command::new("sh").args(["-c", command]).spawn() {
-        error!("Execution error: {e}");
+fn run_command(command: WButtonAction) {
+    match command.handler {
+        WButtonActionHandler::Executable(exe) => {
+            if let Err(e) = Command::new(exe).spawn() {
+                error!("Execution error: {e}");
+            }
+        }
+        WButtonActionHandler::Shell(script) => {
+            if let Err(e) = Command::new("sh").args(["-c", &script]).spawn() {
+                error!("Execution error: {e}");
+            }
+        }
     }
 }
 
-fn on_option(command: &str, delay_ms: u32, window: libadwaita::ApplicationWindow) {
+fn on_option(
+    command_list: &WButtonActionList,
+    delay_ms: u32,
+    window: libadwaita::ApplicationWindow,
+) {
+    let Some(command) = command_list.enumerate().find(|w| w.is_applicable()) else {
+        return;
+    };
+
+    let command = command.clone();
+
     window.connect_hide(clone!(
-        #[to_owned]
+        #[strong]
         command,
         #[weak]
         window,
@@ -63,12 +82,12 @@ fn on_option(command: &str, delay_ms: u32, window: libadwaita::ApplicationWindow
             timeout_add_local_once(
                 Duration::from_millis(delay_ms.into()),
                 clone!(
-                    #[to_owned]
+                    #[strong]
                     command,
                     #[weak_allow_none]
                     window,
                     move || {
-                        run_command(&command);
+                        run_command(command);
                         window.inspect(libadwaita::ApplicationWindow::close);
                     }
                 ),
@@ -98,8 +117,7 @@ fn handle_key(
         let button = config.buttons.iter().find(|b| b.keybind == *key_name);
 
         if let Some(WButton { action, .. }) = button {
-            let state_action = action.clone();
-            on_option(&state_action, config.delay_command_ms, window.clone());
+            on_option(action, config.delay_command_ms, window.clone());
         }
     }
 

@@ -82,20 +82,20 @@ The command-line option counterparts of these options take precedence over the c
 
 ```json
 {
-  "margin": 200,
-  "buttons-per-row": "1/1",
-  "delay-command-ms": 100,
-  "close-on-lost-focus": true,
-  "show-keybinds": true,
-  "buttons": [
-    {
-      "label": "lock",
-      "action": "swaylock",
-      "text": "Lock",
-      "keybind": "l",
-      "icon": "/usr/share/wleave/icons/lock.svg"
-    }
-  ]
+    "margin": 200,
+    "buttons-per-row": "1/1",
+    "delay-command-ms": 100,
+    "close-on-lost-focus": true,
+    "show-keybinds": true,
+    "buttons": [
+        {
+            "label": "lock",
+            "action": "swaylock",
+            "text": "Lock",
+            "keybind": "l",
+            "icon": "/usr/share/wleave/icons/lock.svg"
+        }
+    ]
 }
 ```
 
@@ -104,6 +104,42 @@ For example, with `jq`, buttons can be picked out:
 
 ```shell
 $ jq '.buttons[] |= select([.label] | inside(["lock", "logout"]))' layout.json | wleave --layout -
+```
+
+### Dynamic layouts <sup>since 0.7.0</sup>
+
+This feature is still in development. Stay tuned!
+
+### Conditional actions <sup>since 0.7.0</sup>
+
+The action field can be an object with exactly one of `shell` or `executable` properties set. The `shell` action
+executes the given command in the system shell, while the `executable` action executes the specified binary,
+assuming it is in `$PATH`. `executable` actions get filtered if the specified executable does not exist,
+allowing multiple possible options.
+
+Any extra properties in the `action` objects are interpreted as filters. Currently, only environment variable filtering
+is implemented, where the values fields prefixed with `$` are matched as conditions for the given action.
+
+The action field can also be an array where the first matching command is picked.
+
+For example, in the following example, the `loginctl lock-session` command is executed on GNOME, while other desktop
+environments will try either `gtklock` or `swaylock` in that order.
+
+```json
+{
+    "action": [
+        {
+            "$DESKTOP_SESSION": "gnome",
+            "shell": "loginctl lock-session"
+        },
+        {
+            "executable": "gtklock"
+        },
+        {
+            "executable": "swaylock"
+        }
+    ]
+}
 ```
 
 ## Styling
@@ -172,6 +208,7 @@ See <https://gitlab.gnome.org/GNOME/gtk/-/blob/4.18.0/gdk/keynames.txt> for a li
 
 ## Enhancements
 
+- Conditionally pick different actions on different desktop environments
 - SVG icons can be colorized via CSS `color`
 - Libadwaita accent colors
 - Automatic light theme by default since 0.6

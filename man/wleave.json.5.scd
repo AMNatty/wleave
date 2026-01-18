@@ -77,13 +77,40 @@ If unspecified, the buttons fill all available space between the margins.
 wleave buttons may have the following properties:
 
 - *"label"* (string) - internal name of the button that can be used in CSS as an identifier
-- *"action"* (command string) - the action that will be executed via shell upon pressing the button
+- *"action"* (command string or object or list thereof) - the action that will be executed via shell upon pressing the button
 - *"text"* (string) - the visible label text of the button
 - *"keybind"* (string) - a GTK key name associated with the button
 - *"icon"* (path string) - filename to load an icon image from
 - *"height"* (*optional*, number) - value in the range 0.0 to 1.0 to override the placement of the label in the button
 - *"width"* (*optional*, number) - value in the range 0.0 to 1.0 to override the placement of the label in the button
 - *"circular"* (*optional*, boolean, default false)
+
+The action field can be an object with exactly one of `shell` or `executable` properties set. The `shell` action executes
+the given command in the system shell, while the `executable` action executes the specified binary, assuming it in `$PATH`.
+`executable` actions get filtered if the specified executable does not exist, allowing multiple possible options.
+
+Any extra properties in the `action` objects are interpreted as filters. Currently, only environment variable filtering
+is implemented, where the values fields prefixed with `$` are matched as conditions for the given action.
+
+The action field can also be an array where the first matching command is picked.
+
+For example, in the following example, the `loginctl lock-session` command is executed on GNOME, while other desktop
+environments will try either `gtklock` or `swaylock` in that order.
+
+```
+"action": [
+    {
+        "$DESKTOP_SESSION": "gnome",
+        "shell": "loginctl lock-session"
+    },
+    {
+        "executable": "gtklock"
+    },
+    {
+        "executable": "swaylock"
+    }
+]
+```
 
 # FILE
 
