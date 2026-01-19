@@ -58,6 +58,9 @@ From `man 5 wleave.json`, the allowed top-level options are:
 
 * `"buttons"` **(array)** - a list of buttons
 * `"css"` **(string)** - Specify a custom CSS file instead of the default one
+* `"service": false` **(boolean)**
+  Run the application as a service, with all instances of wleave opening this one. Allows faster startup at the
+  cost of running in the background
 * `"buttons-per-row": "3"` **(string)** Set the number of buttons per row, or use a fraction to specify the number
   of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)
 * `"column-spacing": 8` **(number)** Set space between buttons columns
@@ -105,6 +108,21 @@ For example, with `jq`, buttons can be picked out:
 ```shell
 $ jq '.buttons[] |= select([.label] | inside(["lock", "logout"]))' layout.json | wleave --layout -
 ```
+
+### Running as a service <sup>since 0.7.0</sup>
+
+Add the flag `--service` to run the application as a service, waiting until it is activated by another
+call to `wleave`. This allows faster startup at the cost of running in the background.
+
+For example, to run `wleave` in the background with the [Niri](https://github.com/YaLTeR/niri) compositor,
+spawn the application on startup:
+
+```kdl
+spawn-at-startup "wleave" "--service"
+```
+
+Currently, the configuration is determined by the background instance, and a restart is necessary
+to apply configuration changes.
 
 ### Dynamic layouts <sup>since 0.7.0</sup>
 
@@ -208,11 +226,12 @@ See <https://gitlab.gnome.org/GNOME/gtk/-/blob/4.18.0/gdk/keynames.txt> for a li
 
 ## Enhancements
 
-- Conditionally pick different actions on different desktop environments
-- SVG icons can be colorized via CSS `color`
-- Libadwaita accent colors
-- Automatic light theme by default since 0.6
-- Natively GTK4 since version 0.5
+- A desktop file <sup>since 0.7</sup>
+- Conditionally pick different actions on different desktop environments <sup>since 0.7</sup>
+- SVG icons can be colorized via CSS `color` <sup>since 0.6</sup>
+- Libadwaita accent colors <sup>since 0.6</sup>
+- Automatic light theme by default <sup>since 0.6</sup>
+- Natively GTK4 <sup>since 0.5</sup>
 - New pretty icons by [@earth-walker](https://github.com/earth-walker)
 - Autoclose when window focus is lost (the `-f/--close-on-lost-focus` flag)
 - Mnemonic labels (the `-k/--show-keybinds` flag)

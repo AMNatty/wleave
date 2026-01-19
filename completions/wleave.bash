@@ -23,12 +23,20 @@ _wleave() {
 
     case "${cmd}" in
         wleave)
-            opts="-v -l -C -b -c -r -m -L -R -T -B -A -d -f -k -p -x -h --version --layout --css --buttons-per-row --column-spacing --row-spacing --margin --margin-left --margin-right --margin-top --margin-bottom --button-aspect-ratio --delay-command-ms --close-on-lost-focus --show-keybinds --protocol --no-version-info --help"
+            opts="-v -s -l -C -b -c -r -m -L -R -T -B -A -d -f -k -p -x -h --version --service --layout --css --buttons-per-row --column-spacing --row-spacing --margin --margin-left --margin-right --margin-top --margin-bottom --button-aspect-ratio --delay-command-ms --close-on-lost-focus --show-keybinds --protocol --no-version-info --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
+                --service)
+                    COMPREPLY=($(compgen -W "true false" -- "${cur}"))
+                    return 0
+                    ;;
+                -s)
+                    COMPREPLY=($(compgen -W "true false" -- "${cur}"))
+                    return 0
+                    ;;
                 --layout)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0

@@ -15,6 +15,11 @@ Button layout is specified in the extra *"button"* field.
 *"css"*: <string>
 	Specify a custom CSS file instead of the default one
 
+*"service"*: <boolean>
+    Run the application as a service, with all instances of wleave opening this one. Allows faster startup at the
+    cost of running in the background. ++
+*Default*: false
+
 *"buttons-per-row"*: <string>
 	Set the number of buttons per row, or use a fraction to specify the number of rows to be used
 	(e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows) ++

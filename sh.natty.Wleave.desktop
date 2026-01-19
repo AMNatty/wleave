@@ -1,8 +1,8 @@
 [Desktop Entry]
-Version=0.6.2
+Version=0.7.0
 Type=Application
 Name=Wleave
-Comment=Open a system log out menu
+Comment=Open a system log-out menu
 Exec=wleave
 Terminal=false
 StartupNotify=false

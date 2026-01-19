@@ -166,24 +166,52 @@ impl WButtonActionList {
     }
 }
 
+#[derive(Debug, Default)]
+pub enum WButtonJustify {
+    #[default]
+    Center,
+    Fill,
+    Left,
+    Right,
+}
+
+impl<'de> Deserialize<'de> for WButtonJustify {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(FromStr::from_str(<&str>::deserialize(deserializer)?).expect("never fails"))
+    }
+}
+
+impl FromStr for WButtonJustify {
+    type Err = Infallible;
+
+    fn from_str(val: &str) -> Result<Self, Self::Err> {
+        Ok(match val {
+            "center" => WButtonJustify::Center,
+            "fill" => WButtonJustify::Fill,
+            "left" => WButtonJustify::Left,
+            "right" => WButtonJustify::Right,
+            _ => WButtonJustify::Center,
+        })
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct WButton {
     pub label: String,
     pub action: WButtonActionList,
     pub text: String,
     pub keybind: String,
-    #[serde(default = "default_justify")]
-    pub justify: String,
+    #[serde(default)]
+    pub justify: WButtonJustify,
     pub width: Option<f32>,
     pub height: Option<f32>,
     #[serde(default = "default_circular")]
     pub circular: bool,
     #[serde(default)]
     pub icon: Option<String>,
-}
-
-fn default_justify() -> String {
-    String::from("center")
 }
 
 fn default_circular() -> bool {

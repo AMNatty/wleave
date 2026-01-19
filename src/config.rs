@@ -1,5 +1,5 @@
-use crate::WError;
 use crate::button::WButton;
+use crate::error::WError;
 use gdk4::gio;
 use gtk4::CssProvider;
 use miette::{NamedSource, Report, SourceOffset};
@@ -13,6 +13,8 @@ use wleave::cli_opt::{Args, AspectRatio, ButtonLayout, Protocol};
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct AppConfig {
+    #[serde(default)]
+    pub service: bool,
     pub margin_left: Option<i32>,
     pub margin_right: Option<i32>,
     pub margin_top: Option<i32>,
@@ -43,6 +45,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         AppConfig {
+            service: false,
             margin_left: None,
             margin_right: None,
             margin_top: None,
@@ -192,6 +195,13 @@ pub fn load_css(file: Option<impl AsRef<Path>>) -> Result<CssProvider, WError> {
 }
 
 pub fn merge_with_args(config: &mut AppConfig, args: &Args) {
+    if let Some(service) = args.service {
+        info!("\"service\" specified from args: {}", service);
+        config.service = service;
+    } else {
+        info!("\"service\" specified from config: {:?}", config.service);
+    }
+
     if let Some(margin_top) = args.margin_top {
         info!("\"margin-top\" specified from args: {}", margin_top);
         config.margin_top = Some(margin_top);

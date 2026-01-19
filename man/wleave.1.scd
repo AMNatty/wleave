@@ -16,6 +16,9 @@ wleave - A Wayland logout menu
 *-l, --layout* <layout>
 	Specify a custom layout file, specify - to read the config from stdin
 
+*-S, --service*
+    Run the application as a service, with all instances of wleave opening this one. Allows faster startup at the cost of running in the background.
+
 *-v, --version*
 	Show version number and stop
 

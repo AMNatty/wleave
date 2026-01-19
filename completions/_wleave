@@ -15,6 +15,8 @@ _wleave() {
 
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" : \
+'-s+[Run the application in service mode - it will stay in the background until triggered]' \
+'--service=[Run the application in service mode - it will stay in the background until triggered]' \
 '-l+[Specify a layout file, specifying - will read the layout config from stdin]:LAYOUT:_files' \
 '--layout=[Specify a layout file, specifying - will read the layout config from stdin]:LAYOUT:_files' \
 '-C+[Specify a custom CSS file]:CSS:_files' \
