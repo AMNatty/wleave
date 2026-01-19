@@ -3,9 +3,10 @@
 ![AUR version](https://img.shields.io/aur/version/wleave-git)
 ![GitHub](https://img.shields.io/github/license/AMNatty/wleave)
 
-A Wayland layer-shell logout prompt, now ported to GTK4!
+A Wayland layer-shell logout prompt!
 
-A fork of [wlogout](https://github.com/ArtsyMacaw/wlogout) with a bunch of quality-of-life features.
+Originally a fork of [wlogout](https://github.com/ArtsyMacaw/wlogout), `wleave` is now natively GTK4 & Libadwaita and
+has a bunch of added quality-of-life features.
 
 ![The default Wleave menu look](/example.png)
 

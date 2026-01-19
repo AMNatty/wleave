@@ -94,16 +94,12 @@ pub struct Args {
     pub no_version_info: Option<bool>,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub enum ButtonLayout {
+    #[default]
+    Auto,
     PerRow(u32),
     RowRatio(u32, u32),
-}
-
-impl Default for ButtonLayout {
-    fn default() -> Self {
-        ButtonLayout::PerRow(3)
-    }
 }
 
 impl<'de> Deserialize<'de> for ButtonLayout {
@@ -120,6 +116,10 @@ impl FromStr for ButtonLayout {
     type Err = Box<dyn Error + Send + Sync + 'static>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s == "auto" {
+            return Ok(ButtonLayout::Auto);
+        }
+
         if let Ok(per_row) = s.parse::<NonZeroU32>() {
             return Ok(ButtonLayout::PerRow(per_row.into()));
         }
@@ -137,6 +137,7 @@ impl FromStr for ButtonLayout {
 impl Display for ButtonLayout {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Auto => f.write_str("auto"),
             Self::PerRow(r) => write!(f, "{r}"),
             Self::RowRatio(n, d) => write!(f, "{n}/{d}"),
         }

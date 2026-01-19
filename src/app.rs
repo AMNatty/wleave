@@ -159,6 +159,13 @@ pub fn create_app(
     ));
     window.add_controller(key_controller);
 
+    let btn_count = config.buttons.len() as u32;
+    let buttons_per_row = match config.buttons_per_row {
+        ButtonLayout::Auto => None,
+        ButtonLayout::PerRow(n) => Some(n),
+        ButtonLayout::RowRatio(n, d) => Some(btn_count * n / d.min(btn_count * n)),
+    };
+
     let buttons_container = gtk4::Box::builder()
         .valign(gtk4::Align::Fill)
         .halign(gtk4::Align::Fill)
@@ -166,14 +173,9 @@ pub fn create_app(
             config.button_aspect_ratio.map(AspectRatio::as_float),
             config.column_spacing,
             config.row_spacing,
+            buttons_per_row,
         ))
         .build();
-
-    let btn_count = config.buttons.len() as u32;
-    let buttons_per_row = match config.buttons_per_row {
-        ButtonLayout::PerRow(n) => n,
-        ButtonLayout::RowRatio(n, d) => btn_count * n / d.min(btn_count * n),
-    };
 
     for bttn in config.buttons.iter() {
         let justify = match bttn.justify {

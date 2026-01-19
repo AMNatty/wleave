@@ -92,6 +92,8 @@ mod menu_layout {
     pub struct LayoutMenuImpl {
         #[property(name = "aspect-ratio", get, set)]
         aspect_ratio: Cell<f64>,
+        #[property(name = "buttons-per-row", get, set)]
+        buttons_per_row: Cell<u32>,
         #[property(name = "aspect-ratio-set", get, set)]
         aspect_ratio_set: Cell<bool>,
         #[property(name = "column-spacing", get, set)]
@@ -194,12 +196,17 @@ impl MenuLayout {
         ratio: Option<impl Into<f64>>,
         column_spacing: impl Into<f64>,
         row_spacing: impl Into<f64>,
+        buttons_per_row: Option<impl Into<u32>>,
     ) -> Self {
         glib::Object::builder()
             .property("aspect-ratio-set", ratio.is_some())
             .property("aspect-ratio", ratio.map(Into::into).unwrap_or(1.0))
             .property("column-spacing", column_spacing.into())
             .property("row-spacing", row_spacing.into())
+            .property(
+                "buttons-per-row",
+                buttons_per_row.map(Into::into).unwrap_or_default(),
+            )
             .build()
     }
 }
@@ -245,12 +252,22 @@ impl MenuLayoutProvider {
                 let u_width = width as usize;
                 let u_height = height as usize;
 
+                let per_row = obj.buttons_per_row() as usize;
+                // We use 0 for "auto" placement
+                let cols_range = if per_row != 0 {
+                    // Try layouts where all buttons either fit into one row or exactly "per_row"
+                    per_row.min(n)..=per_row
+                } else {
+                    // Try all possible layouts
+                    1..=n
+                };
+
                 // Axis-aligned rectangle packing
                 // We brute-force the best layout, optimizing for max button area
                 for i_rows in 1..=n {
-                    for j_cols in 1..=n {
-                        if i_rows * j_cols > n + i_rows
-                            || i_rows * j_cols > n + j_cols
+                    for j_cols in cols_range.clone() {
+                        if (i_rows * j_cols > n + i_rows || i_rows * j_cols > n + j_cols)
+                            && per_row == 0
                             || i_rows * j_cols < n
                         {
                             continue;
