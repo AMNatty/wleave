@@ -48,7 +48,12 @@ fn entry_point(config: Arc<AppConfig>) -> miette::Result<()> {
         move |_| on_startup(config.as_ref())
     ));
 
-    let hold_guard = app.hold();
+    let hold_guard = if config.service {
+        Some(app.hold())
+    } else {
+        None
+    };
+
     app.connect_activate(move |app| {
         let _ = &hold_guard;
 
@@ -77,7 +82,7 @@ fn main() -> miette::Result<()> {
     merge_with_args(&mut config, &args);
 
     let config = Arc::new(config);
-    entry_point(config.clone())?;
+    entry_point(config)?;
 
     Ok(())
 }
