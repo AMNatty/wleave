@@ -20,9 +20,7 @@
         },
         {
             "label": "hibernate",
-            "action": [
-                "systemctl hibernate"
-            ],
+            "action": "systemctl hibernate",
             "text": "Hibernate",
             "keybind": "h",
             "icon": "/usr/share/wleave/icons/hibernate.svg"
@@ -54,9 +52,7 @@
         },
         {
             "label": "shutdown",
-            "action": [
-                "systemctl poweroff"
-            ],
+            "action": "systemctl poweroff",
             "text": "Shutdown",
             "keybind": "s",
             "icon": "/usr/share/wleave/icons/shutdown.svg"
@@ -70,9 +66,7 @@
         },
         {
             "label": "reboot",
-            "action": [
-                "systemctl reboot"
-            ],
+            "action": "systemctl reboot",
             "text": "Reboot",
             "keybind": "r",
             "icon": "/usr/share/wleave/icons/reboot.svg"

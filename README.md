@@ -122,7 +122,7 @@ Any action that is **a plain string is interpreted as a shell command** with no 
 Any extra properties in the `action` objects are interpreted as filters. Currently, only environment variable filtering
 is implemented, where the values of fields prefixed with `$` are matched as conditions for the given action.
 
-The action field can also be an array where the first matching command is picked.
+**The action field can also be an array where the first matching command is picked.**
 
 For example, in the following example, the `loginctl lock-session` command is executed on GNOME, while other desktop
 environments will try `gtklock` and then `swaylock`.
