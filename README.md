@@ -117,13 +117,15 @@ executes the given command in the system shell, while the `executable` action ex
 assuming it is in `$PATH`. `executable` actions get filtered if the specified executable does not exist,
 allowing multiple possible options.
 
+Any action that is **a plain string is interpreted as a shell command** with no conditions set.
+
 Any extra properties in the `action` objects are interpreted as filters. Currently, only environment variable filtering
-is implemented, where the values fields prefixed with `$` are matched as conditions for the given action.
+is implemented, where the values of fields prefixed with `$` are matched as conditions for the given action.
 
 The action field can also be an array where the first matching command is picked.
 
 For example, in the following example, the `loginctl lock-session` command is executed on GNOME, while other desktop
-environments will try either `gtklock` or `swaylock` in that order.
+environments will try `gtklock` and then `swaylock`.
 
 ```json
 {
@@ -135,9 +137,7 @@ environments will try either `gtklock` or `swaylock` in that order.
         {
             "executable": "gtklock"
         },
-        {
-            "executable": "swaylock"
-        }
+        "swaylock"
     ]
 }
 ```
