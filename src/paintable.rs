@@ -1,6 +1,5 @@
 use gdk4::prelude::*;
 use gdk4::subclass::paintable::PaintableImpl;
-use glib::Object;
 use glib::subclass::ObjectImplRef;
 use glib::subclass::prelude::*;
 use glib::translate::IntoGlib;
@@ -16,8 +15,9 @@ use tracing::error;
 pub struct PicturePaintableImpl {
     #[property(name = "image-path", get, set)]
     image_path: RefCell<String>,
-    #[property(name = "widget", get, set)]
-    widget: RefCell<Option<gtk4::Widget>>,
+    #[property(name = "scale-factor", get, set)]
+    scale_factor: Cell<i32>,
+    widget: RefCell<Option<glib::WeakRef<gtk4::Widget>>>,
     handle: RefCell<Option<rsvg::SvgHandle>>,
     texture: RefCell<Option<gdk4::MemoryTexture>>,
     _symbolic_updated: Cell<bool>,
@@ -45,11 +45,15 @@ impl ObjectImpl for PicturePaintableImpl {
         self.parent_constructed();
 
         let obj = self.obj();
-        let impl_ref = ObjectImplRef::new(self);
+        let impl_ref = ObjectImplRef::new(self).downgrade();
         obj.connect_notify_local(Some("image-path"), move |pict, _| {
-            impl_ref.texture.take();
+            let Some(obj) = impl_ref.upgrade() else {
+                return;
+            };
 
-            *impl_ref.handle.borrow_mut() = match rsvg::Loader::new()
+            obj.texture.take();
+
+            *obj.handle.borrow_mut() = match rsvg::Loader::new()
                 .read_path(pict.image_path())
                 .map_err(|e| miette!("Failed to read SVG: {}", e))
             {
@@ -65,14 +69,6 @@ impl ObjectImpl for PicturePaintableImpl {
 
 impl PicturePaintableImpl {
     fn draw(&self, width: f64, height: f64) {
-        let scale = self
-            .widget
-            .borrow()
-            .as_ref()
-            .map(|w| w.scale_factor() as f64)
-            .unwrap_or(1.0);
-        let height = height * scale;
-        let width = width * scale;
         let mut tex_borrow = self.texture.borrow_mut();
         if tex_borrow.is_some() {
             return;
@@ -134,7 +130,7 @@ impl PicturePaintableImpl {
             } else {
                 let format = gdk4::MemoryFormat::A8r8g8b8;
             }
-        };
+        }
 
         *tex_borrow = Some(gdk4::MemoryTexture::new(
             width as i32,
@@ -203,7 +199,9 @@ impl PaintableImpl for PicturePaintableImpl {
 
     fn snapshot(&self, snapshot: &gdk4::Snapshot, width: f64, height: f64) {
         if !self._symbolic_updated.get() {
-            if let Some(widget) = &*self.widget.borrow() {
+            if let Some(w) = &*self.widget.borrow()
+                && let Some(widget) = w.upgrade()
+            {
                 self.snapshot_symbolic(snapshot, width, height, &[widget.color()]);
             } else {
                 self.snapshot_symbolic(snapshot, width, height, &[]);
@@ -241,7 +239,7 @@ impl SymbolicPaintableImpl for PicturePaintableImpl {
 
         let col_idx = gtk4::SymbolicColor::Foreground.into_glib();
 
-        let col = colors[col_idx as usize];
+        let col = colors.get(col_idx as usize).unwrap_or(&gdk4::RGBA::BLACK);
 
         if let Err(e) = handle_ref
             .set_stylesheet(&format!(
@@ -268,15 +266,31 @@ impl SymbolicPaintableImpl for PicturePaintableImpl {
 
 impl PicturePaintable {
     fn for_path(icon_path: impl Into<String>) -> Self {
-        Object::builder()
+        glib::Object::builder()
             .property("image-path", icon_path.into())
+            .property("scale-factor", 1)
             .build()
     }
 }
 
 pub fn svg_picture_colorized(icon: &str) -> gtk4::Picture {
     let paintable = PicturePaintable::for_path(icon);
+
     let picture = gtk4::Picture::for_paintable(&paintable);
-    paintable.set_widget(picture.clone());
+    picture.connect_scale_factor_notify(move |pict| {
+        let Some(p) = pict.paintable() else {
+            return;
+        };
+
+        let Some(paintable) = p.downcast_ref::<PicturePaintable>() else {
+            return;
+        };
+
+        paintable.set_scale_factor(pict.scale_factor());
+    });
+
+    let internals = paintable.imp();
+    *internals.widget.borrow_mut() = Some(ObjectExt::downgrade(picture.as_ref()));
+
     picture
 }
