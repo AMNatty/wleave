@@ -18,14 +18,14 @@ miette = { version = "7", features = ["derive", "fancy"] }
 cfg-if = "1"
 
 dirs = "6.0"
-cairo-rs = "0.20"
-glib = "0.20"
-glib-macros = "0.20"
-libadwaita = { version = "0.7", features = ["v1_7"] }
-librsvg = "~2.60"
-gdk4 = { version = "0.9", features = ["v4_18"] }
-gtk4 = { version = "0.9", features = ["gnome_45"] }
-gtk4-layer-shell = "0.5"
+cairo-rs = "0.21"
+glib = "0.21"
+glib-macros = "0.21"
+libadwaita = { version = "0.8", features = ["v1_7"] }
+librsvg = "2.61"
+gdk4 = { version = "0.10", features = ["v4_18"] }
+gtk4 = { version = "0.10", features = ["gnome_45"] }
+gtk4-layer-shell = "0.7"
 which = "8"
 
 serde = { version = "1.0", features = ["derive"] }

@@ -1,6 +1,7 @@
 use serde::de::{IntoDeserializer, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 use std::collections::BTreeMap;
+use std::convert::Infallible;
 use std::str::FromStr;
 use tracing::warn;
 
@@ -46,7 +47,7 @@ impl WButtonAction {
 }
 
 impl FromStr for WButtonAction {
-    type Err = ();
+    type Err = Infallible;
 
     fn from_str(action: &str) -> Result<Self, Self::Err> {
         Ok(WButtonAction {
