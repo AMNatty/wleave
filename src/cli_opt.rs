@@ -18,6 +18,13 @@ pub enum Protocol {
     Xdg,
 }
 
+#[derive(Debug, Copy, Clone, Default, ValueEnum, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum MenuLayoutStrategy {
+    #[default]
+    Grid,
+}
+
 #[derive(Parser, Debug)]
 #[command(author, version, disable_version_flag = true, about, long_about = None)]
 pub struct Args {
@@ -25,12 +32,17 @@ pub struct Args {
     pub version: Option<bool>,
 
     /// Run the application in service mode - it will stay in the background until triggered
-    #[arg(short = 's', long, num_args = 0..=1, require_equals = true, default_missing_value = "true")]
+    #[arg(short = 's', long, num_args = 0..=1, require_equals = true, default_missing_value = "true"
+    )]
     pub service: Option<bool>,
 
     /// Specify a layout file, specifying - will read the layout config from stdin
     #[arg(short = 'l', long)]
     pub layout: Option<PathBuf>,
+
+    /// Specify the way the buttons should be laid out in the available space
+    #[arg(long)]
+    pub button_layout: Option<MenuLayoutStrategy>,
 
     /// Specify a custom CSS file
     #[arg(short = 'C', long)]
@@ -78,11 +90,13 @@ pub struct Args {
     pub delay_command_ms: Option<u32>,
 
     /// Close the menu on lost focus
-    #[arg(short = 'f', long, num_args = 0..=1, require_equals = true, default_missing_value = "true")]
+    #[arg(short = 'f', long, num_args = 0..=1, require_equals = true, default_missing_value = "true"
+    )]
     pub close_on_lost_focus: Option<bool>,
 
     /// Show the associated key binds
-    #[arg(short = 'k', long, num_args = 0..=1, require_equals = true, default_missing_value = "true")]
+    #[arg(short = 'k', long, num_args = 0..=1, require_equals = true, default_missing_value = "true"
+    )]
     pub show_keybinds: Option<bool>,
 
     /// Use layer-shell or xdg protocol
@@ -90,7 +104,8 @@ pub struct Args {
     pub protocol: Option<Protocol>,
 
     /// Hide version information
-    #[arg(short = 'x', long, num_args = 0..=1, require_equals = true, default_missing_value = "true")]
+    #[arg(short = 'x', long, num_args = 0..=1, require_equals = true, default_missing_value = "true"
+    )]
     pub no_version_info: Option<bool>,
 }
 

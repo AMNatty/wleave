@@ -62,6 +62,8 @@ From `man 5 wleave.json`, the allowed top-level options are:
 * `"service": false` **(boolean)**
   Run the application as a service, with all instances of wleave opening this one. Allows faster startup at the
   cost of running in the background
+* `"button-layout": "grid"` Specify the way buttons should be laid out.
+  See [dynamic layouts](#dynamic-layouts-supsince-070sup) for more details.
 * `"buttons-per-row": "3"` **(string)** Set the number of buttons per row, or use a fraction to specify the number
   of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)
 * `"column-spacing": 8` **(number)** Set space between buttons columns
@@ -127,7 +129,14 @@ to apply configuration changes.
 
 ### Dynamic layouts <sup>since 0.7.0</sup>
 
-This feature is still in development. Stay tuned!
+Choose one of the available layouts, using the `--button-layout` option.
+
+#### Grid
+
+Name: `"grid"` <br />
+Since: 0.7
+
+The default mode, with buttons being simply laid out in a grid.
 
 ### Conditional actions <sup>since 0.7.0</sup>
 

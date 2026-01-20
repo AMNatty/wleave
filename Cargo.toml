@@ -17,6 +17,8 @@ miette = { version = "7", features = ["derive", "fancy"] }
 
 cfg-if = "1"
 
+convert_case = "0.10"
+
 dirs = "6.0"
 cairo-rs = "0.21"
 glib = "0.21"

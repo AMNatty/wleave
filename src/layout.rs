@@ -1,8 +1,10 @@
 use crate::layout::menu_layout::LayoutMenuImpl;
 use crate::layout::menu_layout_child::MenuLayoutChildImpl;
 use glib::object::Cast;
+use glib::subclass::types::ObjectSubclassIsExt;
 use gtk4::prelude::{LayoutManagerExt, WidgetExt};
 use libadwaita::gtk;
+use wleave::cli_opt::MenuLayoutStrategy;
 
 mod menu_layout_child {
     use gdk4::prelude::ObjectExt;
@@ -100,7 +102,7 @@ mod menu_layout {
         column_spacing: Cell<f64>,
         #[property(name = "row-spacing", get, set)]
         row_spacing: Cell<f64>,
-        layout_strategy: RefCell<MenuLayoutProvider>,
+        pub(super) layout_strategy: RefCell<MenuLayoutProvider>,
     }
 
     #[glib::object_subclass]
@@ -193,12 +195,13 @@ glib::wrapper! {
 
 impl MenuLayout {
     pub fn new(
+        button_layout: MenuLayoutStrategy,
         ratio: Option<impl Into<f64>>,
         column_spacing: impl Into<f64>,
         row_spacing: impl Into<f64>,
         buttons_per_row: Option<impl Into<u32>>,
     ) -> Self {
-        glib::Object::builder()
+        let obj: MenuLayout = glib::Object::builder()
             .property("aspect-ratio-set", ratio.is_some())
             .property("aspect-ratio", ratio.map(Into::into).unwrap_or(1.0))
             .property("column-spacing", column_spacing.into())
@@ -207,7 +210,12 @@ impl MenuLayout {
                 "buttons-per-row",
                 buttons_per_row.map(Into::into).unwrap_or_default(),
             )
-            .build()
+            .build();
+
+        let imp = obj.imp();
+        imp.layout_strategy.borrow_mut().strategy = button_layout;
+
+        obj
     }
 }
 
@@ -217,12 +225,6 @@ struct MenuLayoutProvider {
     column_spacing: f64,
     row_spacing: f64,
     aspect_ratio: Option<f64>,
-}
-
-#[derive(Default)]
-pub enum MenuLayoutStrategy {
-    #[default]
-    Grid,
 }
 
 impl MenuLayoutProvider {

@@ -12,6 +12,9 @@ Button layout is specified in the extra *"button"* field.
 *"buttons"*: <array of buttons>
 	See section *LAYOUT* for structure
 
+*"button-layout"*: <*"grid"*>
+    Specify the way buttons should be laid out, "grid" being the default. Currently, only "grid" is supported.
+
 *"css"*: <string>
 	Specify a custom CSS file instead of the default one
 

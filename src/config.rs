@@ -1,5 +1,6 @@
 use crate::button::WButton;
 use crate::error::WError;
+use convert_case::ccase;
 use gdk4::gio;
 use gtk4::CssProvider;
 use miette::{NamedSource, Report, SourceOffset};
@@ -8,13 +9,15 @@ use std::borrow::Cow;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use tracing::{Level, debug, enabled, error, info, warn};
-use wleave::cli_opt::{Args, AspectRatio, ButtonLayout, Protocol};
+use wleave::cli_opt::{Args, AspectRatio, ButtonLayout, MenuLayoutStrategy, Protocol};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct AppConfig {
     #[serde(default)]
     pub service: bool,
+    #[serde(default)]
+    pub button_layout: MenuLayoutStrategy,
     pub margin_left: Option<i32>,
     pub margin_right: Option<i32>,
     pub margin_top: Option<i32>,
@@ -46,6 +49,7 @@ impl Default for AppConfig {
     fn default() -> Self {
         AppConfig {
             service: false,
+            button_layout: MenuLayoutStrategy::Grid,
             margin_left: None,
             margin_right: None,
             margin_top: None,
@@ -194,178 +198,51 @@ pub fn load_css(file: Option<impl AsRef<Path>>) -> Result<CssProvider, WError> {
     Ok(provider)
 }
 
+macro_rules! merge_option {
+    ($conf:ident, $args:ident, $name:ident => $val:expr) => {
+        if let Some($name) = $args.$name {
+            info!(
+                "\"{}\" specified from args: {:?}",
+                ccase!(snake -> kebab, stringify!($name)),
+                $name
+            );
+            $conf.$name = $val;
+        } else {
+            info!(
+                "\"{}\" specified from config: {:?}",
+                ccase!(snake -> kebab, stringify!($name)),
+                $conf.$name
+            );
+        }
+    };
+    ($conf:ident, $args:ident, $name:ident) => {
+        merge_option!($conf, $args, $name => $name)
+    };
+}
+
 pub fn merge_with_args(config: &mut AppConfig, args: &Args) {
-    if let Some(service) = args.service {
-        info!("\"service\" specified from args: {}", service);
-        config.service = service;
-    } else {
-        info!("\"service\" specified from config: {:?}", config.service);
-    }
-
-    if let Some(margin_top) = args.margin_top {
-        info!("\"margin-top\" specified from args: {}", margin_top);
-        config.margin_top = Some(margin_top);
-    } else {
-        info!(
-            "\"margin-top\" specified from config: {:?}",
-            config.margin_top
-        );
-    }
-
-    if let Some(margin_bottom) = args.margin_bottom {
-        info!("\"margin-bottom\" specified from args: {}", margin_bottom);
-        config.margin_bottom = Some(margin_bottom);
-    } else {
-        info!(
-            "\"margin-bottom\" specified from config: {:?}",
-            config.margin_bottom
-        );
-    }
-
-    if let Some(margin_left) = args.margin_left {
-        info!("\"margin-left\" specified from args: {}", margin_left);
-        config.margin_left = Some(margin_left);
-    } else {
-        info!(
-            "\"margin-left\" specified from config: {:?}",
-            config.margin_left
-        );
-    }
-
-    if let Some(margin_right) = args.margin_right {
-        info!("\"margin-right\" specified from args: {}", margin_right);
-        config.margin_right = Some(margin_right);
-    } else {
-        info!(
-            "\"margin-right\" specified from config: {:?}",
-            config.margin_right
-        );
-    }
-
-    if let Some(margin) = args.margin {
-        info!("\"margin\" specified from args: {}", margin);
-        config.margin = margin;
-    } else {
-        info!("\"margin\" specified from config: {}", config.margin);
-    }
-
-    if let Some(protocol) = args.protocol {
-        info!("\"protocol\" specified from args: {:?}", protocol);
-        config.protocol = protocol;
-    } else {
-        info!("\"protocol\" specified from config: {:?}", config.protocol);
-    }
-
-    if let Some(column_spacing) = args.column_spacing {
-        info!("\"column-spacing\" specified from args: {}", column_spacing);
-        config.column_spacing = column_spacing;
-    } else {
-        info!(
-            "\"column-spacing\" specified from config: {}",
-            config.column_spacing
-        );
-    }
-
-    if let Some(row_spacing) = args.row_spacing {
-        info!("\"row-spacing\" specified from args: {}", row_spacing);
-        config.row_spacing = row_spacing;
-    } else {
-        info!(
-            "\"row-spacing\" specified from config: {}",
-            config.row_spacing
-        );
-    }
-
-    if let Some(aspect_ratio) = args.button_aspect_ratio {
-        info!(
-            "\"button-aspect-ratio\" specified from args: {}",
-            aspect_ratio
-        );
-        config.button_aspect_ratio = Some(aspect_ratio);
-    } else {
-        info!(
-            "\"button-aspect-ratio\" specified from config: {:?}",
-            config.button_aspect_ratio
-        );
-    }
-
-    if let Some(show_keybinds) = args.show_keybinds {
-        info!("\"show-keybinds\" specified from args: {}", show_keybinds);
-        config.show_keybinds = show_keybinds;
-    } else {
-        info!(
-            "\"show-keybinds\" specified from config: {}",
-            config.show_keybinds
-        );
-    }
-
-    if let Some(close_on_lost_focus) = args.close_on_lost_focus {
-        info!(
-            "\"close-on-lost-focus\" specified from args: {}",
-            close_on_lost_focus
-        );
-        config.close_on_lost_focus = close_on_lost_focus;
-    } else {
-        info!(
-            "\"close-on-lost-focus\" specified from config: {}",
-            config.close_on_lost_focus
-        );
-    }
-
-    if let Some(buttons_per_row) = args.buttons_per_row {
-        info!(
-            "\"buttons-per-row\" specified from args: {:?}",
-            buttons_per_row
-        );
-        config.buttons_per_row = buttons_per_row;
-    } else {
-        info!(
-            "\"buttons-per-row\" specified from config: {:?}",
-            config.buttons_per_row
-        );
-    }
-
-    if let Some(no_version_info) = args.no_version_info {
-        info!(
-            "\"no-version-info\" specified from args: {}",
-            no_version_info
-        );
-        config.no_version_info = no_version_info;
-    } else {
-        info!(
-            "\"no-version-info\" specified from config: {}",
-            config.no_version_info
-        );
-    }
-
-    if let Some(delay_command_ms) = args.delay_command_ms {
-        info!(
-            "\"delay-command-ms\" specified from args: {}",
-            delay_command_ms
-        );
-        config.delay_command_ms = delay_command_ms;
-    } else {
-        info!(
-            "\"delay-command-ms\" specified from config: {}",
-            config.delay_command_ms
-        );
-    }
-
-    if let Some(no_version_info) = args.no_version_info {
-        info!(
-            "\"no-version-info\" specified from args: {}",
-            no_version_info
-        );
-        config.no_version_info = no_version_info;
-    } else {
-        info!(
-            "\"no-version-info\" specified from config: {}",
-            config.no_version_info
-        );
-    }
+    merge_option!(config, args, service);
+    merge_option!(config, args, button_layout);
+    merge_option!(config, args, margin_top => Some(margin_top));
+    merge_option!(config, args, margin_bottom => Some(margin_bottom));
+    merge_option!(config, args, margin_left => Some(margin_left));
+    merge_option!(config, args, margin_right => Some(margin_right));
+    merge_option!(config, args, margin);
+    merge_option!(config, args, protocol);
+    merge_option!(config, args, column_spacing);
+    merge_option!(config, args, row_spacing);
+    merge_option!(config, args, button_aspect_ratio => Some(button_aspect_ratio));
+    merge_option!(config, args, show_keybinds);
+    merge_option!(config, args, close_on_lost_focus);
+    merge_option!(config, args, buttons_per_row);
+    merge_option!(config, args, no_version_info);
+    merge_option!(config, args, delay_command_ms);
 
     if let Some(css) = args.css.clone() {
-        info!("\"css\" file specified from args: {:?}", css.display());
+        info!(
+            "\"css\" file specified from args: {:?}",
+            Path::display(&css)
+        );
         config.css = Some(css);
     } else {
         info!(

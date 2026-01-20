@@ -170,6 +170,7 @@ pub fn create_app(
         .valign(gtk4::Align::Fill)
         .halign(gtk4::Align::Fill)
         .layout_manager(&MenuLayout::new(
+            config.button_layout,
             config.button_aspect_ratio.map(AspectRatio::as_float),
             config.column_spacing,
             config.row_spacing,
