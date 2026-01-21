@@ -197,20 +197,21 @@ impl MenuLayout {
     pub fn new(
         button_layout: MenuLayoutStrategy,
         ratio: Option<impl Into<f64>>,
-        column_spacing: impl Into<f64>,
-        row_spacing: impl Into<f64>,
+        column_spacing: gtk4::Expression,
+        row_spacing: gtk4::Expression,
         buttons_per_row: Option<impl Into<u32>>,
     ) -> Self {
         let obj: MenuLayout = glib::Object::builder()
             .property("aspect-ratio-set", ratio.is_some())
             .property("aspect-ratio", ratio.map(Into::into).unwrap_or(1.0))
-            .property("column-spacing", column_spacing.into())
-            .property("row-spacing", row_spacing.into())
             .property(
                 "buttons-per-row",
                 buttons_per_row.map(Into::into).unwrap_or_default(),
             )
             .build();
+
+        column_spacing.bind(&obj, "column-spacing", glib::Object::NONE);
+        row_spacing.bind(&obj, "row-spacing", glib::Object::NONE);
 
         let imp = obj.imp();
         imp.layout_strategy.borrow_mut().strategy = button_layout;

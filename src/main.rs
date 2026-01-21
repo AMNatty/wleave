@@ -79,7 +79,7 @@ fn main() -> miette::Result<()> {
     let args = Args::parse();
 
     let mut config = load_config(args.layout.as_ref())?;
-    merge_with_args(&mut config, &args);
+    merge_with_args(&mut config, args);
 
     let config = Arc::new(config);
     entry_point(config)?;

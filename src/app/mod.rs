@@ -1,3 +1,6 @@
+pub mod window;
+
+use crate::app::window::WleaveWindow;
 use crate::button::{WButton, WButtonActionList, WButtonJustify};
 use crate::config::AppConfig;
 use crate::exec::run_command;
@@ -5,15 +8,17 @@ use crate::layout::MenuLayout;
 use crate::paintable::svg_picture_colorized;
 use glib::object::Cast;
 use glib::timeout_add_local_once;
-use glib_macros::clone;
-use gtk4::prelude::{BoxExt, ButtonExt, GtkWindowExt, WidgetExt};
+use glib_macros::{clone, closure};
+use gtk4::prelude::{BoxExt, ButtonExt, GObjectPropertyExpressionExt, GtkWindowExt, WidgetExt};
 use gtk4::{EventControllerKey, GestureClick, PropagationPhase};
 use gtk4_layer_shell::{KeyboardMode, LayerShell};
+use libadwaita::prelude::AdwApplicationWindowExt;
 use std::sync::Arc;
 use std::time::Duration;
-use wleave::cli_opt::{AspectRatio, ButtonLayout, Protocol};
+use wleave::cli_opt::{ButtonLayout, Protocol};
+use wleave::units::{AspectRatio, LengthArgs, LengthDimension};
 
-fn do_exit(window: &libadwaita::ApplicationWindow, _service_mode: bool) {
+fn do_exit(window: &WleaveWindow, _service_mode: bool) {
     window.close();
 }
 
@@ -21,7 +26,7 @@ fn on_option(
     command_list: &WButtonActionList,
     delay_ms: u32,
     service_mode: bool,
-    window: libadwaita::ApplicationWindow,
+    window: WleaveWindow,
 ) {
     let Some(command) = command_list.enumerate().find(|w| w.is_applicable()) else {
         return;
@@ -54,7 +59,7 @@ fn on_option(
 
 fn handle_key(
     config: &Arc<AppConfig>,
-    window: &libadwaita::ApplicationWindow,
+    window: &WleaveWindow,
     key: &gtk4::gdk::Key,
 ) -> glib::Propagation {
     if let &gtk4::gdk::Key::Escape = key {
@@ -83,28 +88,70 @@ fn handle_key(
     glib::Propagation::Proceed
 }
 
-pub fn create_app(
-    config: &Arc<AppConfig>,
-    app: &libadwaita::Application,
-) -> libadwaita::ApplicationWindow {
+pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> WleaveWindow {
     let service_mode = config.service;
 
     let container_box = gtk4::CenterBox::builder()
         .valign(gtk4::Align::Fill)
         .halign(gtk4::Align::Fill)
         .orientation(gtk4::Orientation::Vertical)
-        .margin_top(config.margin_top.unwrap_or(config.margin))
-        .margin_bottom(config.margin_bottom.unwrap_or(config.margin))
-        .margin_start(config.margin_left.unwrap_or(config.margin))
-        .margin_end(config.margin_right.unwrap_or(config.margin))
         .build();
 
-    let window = libadwaita::ApplicationWindow::builder()
-        .application(app)
-        .title("wleave")
-        .content(&container_box)
-        .decorated(false)
-        .build();
+    let window = WleaveWindow::new(app);
+    window.set_content(Some(&container_box));
+
+    let margin_left = config
+        .margin_left
+        .clone()
+        .unwrap_or_else(|| config.margin.clone());
+    let margin_top = config
+        .margin_top
+        .clone()
+        .unwrap_or_else(|| config.margin.clone());
+    let margin_right = config
+        .margin_right
+        .clone()
+        .unwrap_or_else(|| config.margin.clone());
+    let margin_bottom = config
+        .margin_top
+        .clone()
+        .unwrap_or_else(|| config.margin.clone());
+
+    window.connect_window_width_notify(clone!(
+        #[weak_allow_none]
+        container_box,
+        move |w| {
+            let Some(container_box) = container_box else {
+                return;
+            };
+
+            let arg = LengthArgs {
+                viewport: (w.width() as f32, w.height() as f32),
+                dimension: LengthDimension::Horizontal,
+            };
+
+            container_box.set_margin_start(margin_left.0.for_args(&arg) as i32);
+            container_box.set_margin_end(margin_right.0.for_args(&arg) as i32);
+        }
+    ));
+
+    window.connect_window_height_notify(clone!(
+        #[weak_allow_none]
+        container_box,
+        move |w| {
+            let Some(container_box) = container_box else {
+                return;
+            };
+
+            let arg = LengthArgs {
+                viewport: (w.width() as f32, w.height() as f32),
+                dimension: LengthDimension::Vertical,
+            };
+
+            container_box.set_margin_top(margin_top.0.for_args(&arg) as i32);
+            container_box.set_margin_bottom(margin_bottom.0.for_args(&arg) as i32);
+        }
+    ));
 
     match config.protocol {
         Protocol::LayerShell => {
@@ -166,14 +213,46 @@ pub fn create_app(
         ButtonLayout::RowRatio(n, d) => Some(btn_count * n / d.min(btn_count * n)),
     };
 
+    let conf_column_spacing = config.column_spacing.clone();
+    let column_spacing = window
+        .property_expression_weak("window-width")
+        .chain_closure::<f32>(closure!(move |w: Option<WleaveWindow>, width: i32| {
+            conf_column_spacing.for_args(&LengthArgs {
+                viewport: (
+                    width as f32,
+                    w.as_ref()
+                        .map(WleaveWindow::window_width)
+                        .unwrap_or_default() as f32,
+                ),
+                dimension: LengthDimension::Horizontal,
+            })
+        }))
+        .upcast();
+
+    let conf_row_spacing = config.column_spacing.clone();
+    let row_spacing = window
+        .property_expression_weak("window-height")
+        .chain_closure::<f32>(closure!(move |w: Option<WleaveWindow>, height: i32| {
+            conf_row_spacing.for_args(&LengthArgs {
+                viewport: (
+                    w.as_ref()
+                        .map(WleaveWindow::window_width)
+                        .unwrap_or_default() as f32,
+                    height as f32,
+                ),
+                dimension: LengthDimension::Horizontal,
+            })
+        }))
+        .upcast();
+
     let buttons_container = gtk4::Box::builder()
         .valign(gtk4::Align::Fill)
         .halign(gtk4::Align::Fill)
         .layout_manager(&MenuLayout::new(
             config.button_layout,
             config.button_aspect_ratio.map(AspectRatio::as_float),
-            config.column_spacing,
-            config.row_spacing,
+            column_spacing,
+            row_spacing,
             buttons_per_row,
         ))
         .build();

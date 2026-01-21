@@ -28,31 +28,31 @@ Button layout is specified in the extra *"button"* field.
 	(e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows) ++
 *Default*: "3"
 
-*"column-spacing"*: <number>
-	Set space between buttons columns ++
-*Default*: 8
+*"column-spacing"*: <number / "<number>px" / "<number>%">
+	Set space between button columns ++
+*Default*: "8px"
 
-*"row-spacing"*: <number>
-	Set space between buttons rows ++
-*Default*: 8
+*"row-spacing"*: <number / "<number>px" / "<number>%">
+	Set space between button rows ++
+*Default*: "8px"
 
-*"margin"*: <number>
+*"margin"*: <number / "<number>px" / "<number>%">
 	Set margin on all sides ++
-*Default*: 200
+*Default*: "10%" (of window size)
 
-*"margin-left"* <number>
+*"margin-left"* <number / "<number>px" / "<number>%">
 	Set margin for left of buttons ++
 Falls back to the value set by *margin*
 
-*"margin-right"* <number>
+*"margin-right"* <number / "<number>px" / "<number>%">
 	Set margin for right of buttons ++
 Falls back to the value set by *margin*
 
-*"margin-top"* <number>
+*"margin-top"* <number / "<number>px" / "<number>%">
 	Set margin for top of buttons ++
 Falls back to the value set by *margin*
 
-*"margin-bottom"* <number>
+*"margin-bottom"* <number / "<number>px" / "<number>%">
 	Set margin for bottom of buttons ++
 Falls back to the value set by *margin*
 

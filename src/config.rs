@@ -9,7 +9,8 @@ use std::borrow::Cow;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use tracing::{Level, debug, enabled, error, info, warn};
-use wleave::cli_opt::{Args, AspectRatio, ButtonLayout, MenuLayoutStrategy, Protocol};
+use wleave::cli_opt::{Args, ButtonLayout, MenuLayoutStrategy, Protocol};
+use wleave::units::{AspectRatio, LengthValue, Margin};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -18,16 +19,16 @@ pub struct AppConfig {
     pub service: bool,
     #[serde(default)]
     pub button_layout: MenuLayoutStrategy,
-    pub margin_left: Option<i32>,
-    pub margin_right: Option<i32>,
-    pub margin_top: Option<i32>,
-    pub margin_bottom: Option<i32>,
+    pub margin_left: Option<Margin>,
+    pub margin_right: Option<Margin>,
+    pub margin_top: Option<Margin>,
+    pub margin_bottom: Option<Margin>,
     #[serde(default = "default_margin")]
-    pub margin: i32,
+    pub margin: Margin,
     #[serde(default = "default_spacing")]
-    pub column_spacing: u32,
+    pub column_spacing: LengthValue,
     #[serde(default = "default_spacing")]
-    pub row_spacing: u32,
+    pub row_spacing: LengthValue,
     pub button_aspect_ratio: Option<AspectRatio>,
     #[serde(default = "default_delay")]
     pub delay_command_ms: u32,
@@ -70,12 +71,12 @@ impl Default for AppConfig {
     }
 }
 
-fn default_margin() -> i32 {
-    200
+fn default_margin() -> Margin {
+    Margin(LengthValue::Percentage(0.1))
 }
 
-fn default_spacing() -> u32 {
-    8
+fn default_spacing() -> LengthValue {
+    LengthValue::Px(8.0)
 }
 
 fn default_delay() -> u32 {
@@ -220,7 +221,7 @@ macro_rules! merge_option {
     };
 }
 
-pub fn merge_with_args(config: &mut AppConfig, args: &Args) {
+pub fn merge_with_args(config: &mut AppConfig, args: Args) {
     merge_option!(config, args, service);
     merge_option!(config, args, button_layout);
     merge_option!(config, args, margin_top => Some(margin_top));

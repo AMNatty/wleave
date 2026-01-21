@@ -1,6 +1,6 @@
+use crate::units::{AspectRatio, LengthValue, Margin};
 use clap::{ArgAction, Parser, ValueEnum};
 use serde::{Deserialize, Deserializer};
-use serde_json::Value;
 use std::{
     error::Error,
     fmt::{Debug, Display},
@@ -55,31 +55,31 @@ pub struct Args {
 
     /// Set space between buttons columns
     #[arg(short = 'c', long)]
-    pub column_spacing: Option<u32>,
+    pub column_spacing: Option<LengthValue>,
 
     /// Set space between buttons rows
     #[arg(short = 'r', long)]
-    pub row_spacing: Option<u32>,
+    pub row_spacing: Option<LengthValue>,
 
     /// Set the margin around buttons
     #[arg(short = 'm', long)]
-    pub margin: Option<i32>,
+    pub margin: Option<Margin>,
 
     /// Set margin for the left of buttons
     #[arg(short = 'L', long)]
-    pub margin_left: Option<i32>,
+    pub margin_left: Option<Margin>,
 
     /// Set margin for the right of buttons
     #[arg(short = 'R', long)]
-    pub margin_right: Option<i32>,
+    pub margin_right: Option<Margin>,
 
     /// Set margin for the top of buttons
     #[arg(short = 'T', long)]
-    pub margin_top: Option<i32>,
+    pub margin_top: Option<Margin>,
 
     /// Set the margin for the bottom of buttons
     #[arg(short = 'B', long)]
-    pub margin_bottom: Option<i32>,
+    pub margin_bottom: Option<Margin>,
 
     /// Set the aspect ratio of the buttons.
     #[arg(short = 'A', long)]
@@ -155,75 +155,6 @@ impl Display for ButtonLayout {
             Self::Auto => f.write_str("auto"),
             Self::PerRow(r) => write!(f, "{r}"),
             Self::RowRatio(n, d) => write!(f, "{n}/{d}"),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum AspectRatio {
-    Float(f32),
-    Ratio(u32, u32),
-}
-
-impl Default for AspectRatio {
-    fn default() -> Self {
-        AspectRatio::Float(1.0)
-    }
-}
-
-impl<'de> Deserialize<'de> for AspectRatio {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let v = Value::deserialize(deserializer)?;
-        if let Some(f) = v.as_f64() {
-            Ok(AspectRatio::Float(f as f32))
-        } else if let Some(s) = v.as_str() {
-            FromStr::from_str(s).map_err(serde::de::Error::custom)
-        } else {
-            Err(serde::de::Error::custom(
-                "Aspect ratio neither a positive float nor a ratio (1/1, 2/3, ...)",
-            ))
-        }
-    }
-}
-
-impl FromStr for AspectRatio {
-    type Err = Box<dyn Error + Send + Sync + 'static>;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Ok(float) = s.parse::<f32>() {
-            if float < 0.0 {
-                return Err("Aspect ratio cannot be negative".into());
-            }
-            return Ok(AspectRatio::Float(float));
-        }
-
-        if let Some((n, d)) = s.split_once('/')
-            && let (Ok(n), Ok(d)) = (n.parse::<NonZeroU32>(), d.parse::<NonZeroU32>())
-        {
-            return Ok(AspectRatio::Ratio(n.into(), d.into()));
-        }
-
-        Err("Aspect ratio neither a float nor a ratio".into())
-    }
-}
-
-impl Display for AspectRatio {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Float(r) => write!(f, "{r}"),
-            Self::Ratio(n, d) => write!(f, "{n}/{d}"),
-        }
-    }
-}
-
-impl AspectRatio {
-    pub fn as_float(self) -> f32 {
-        match self {
-            Self::Float(f) => f,
-            Self::Ratio(n, d) => (n as f32) / (d as f32),
         }
     }
 }

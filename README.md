@@ -66,13 +66,15 @@ From `man 5 wleave.json`, the allowed top-level options are:
   See [dynamic layouts](#dynamic-layouts-supsince-070sup) for more details.
 * `"buttons-per-row": "3"` **(string)** Set the number of buttons per row, or use a fraction to specify the number
   of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)
-* `"column-spacing": 8` **(number)** Set space between buttons columns
-* `"row-spacing": 8` **(number)** Set space between buttons rows
-* `"margin": 200` **(number)** Set margin on all sides
-* `"margin-left"` **(number)** Set margin for left of buttons. Falls back to the value set by *margin*
-* `"margin-right"` **(number)** Set margin for right of buttons. Falls back to the value set by *margin*
-* `"margin-top"` **(number)** Set margin for top of buttons. Falls back to the value set by *margin*
-* `"margin-bottom"` **(number)** Set margin for bottom of buttons. Falls back to the value set by *margin*
+* `"column-spacing": "8px"` **(number / "#px" / "#%")** Set space between buttons columns
+* `"row-spacing": "8px"` **(number / "#px" / "#%")** Set space between buttons rows
+* `"margin": "10%"` **(number / "#px" / "#%")** Set margin on all sides
+* `"margin-left"` **(number / "#px" / "#%")** Set margin for left of buttons. Falls back to the value set by *margin*
+* `"margin-right"` **(number / "#px" / "#%")** Set margin for right of buttons. Falls back to the value set by
+  *margin*
+* `"margin-top"` **(number / "#px" / "#%")** Set margin for top of buttons. Falls back to the value set by *margin*
+* `"margin-bottom"` **(number / "#px" / "#%")** Set margin for bottom of buttons. Falls back to the value set by
+  *margin*
 * `"button-aspect-ratio"` **(string or number)** Set the aspect ratio of the buttons, either as a float (as a number or
   string) or a ratio (e.g. "5/4"). If unspecified, the buttons fill all available space between the margins.
 * `"close-on-lost-focus": false` **(boolean)** Closes the menu if focus is lost
