@@ -69,6 +69,10 @@ impl ObjectImpl for PicturePaintableImpl {
 
 impl PicturePaintableImpl {
     fn draw(&self, width: f64, height: f64) {
+        let scale: f64 = self.scale_factor.get().into();
+        let width = width * scale;
+        let height = height * scale;
+
         let mut tex_borrow = self.texture.borrow_mut();
         if tex_borrow.is_some() {
             return;
@@ -277,6 +281,7 @@ pub fn svg_picture_colorized(icon: &str) -> gtk4::Picture {
     let paintable = PicturePaintable::for_path(icon);
 
     let picture = gtk4::Picture::for_paintable(&paintable);
+    paintable.set_scale_factor(picture.scale_factor());
     picture.connect_scale_factor_notify(move |pict| {
         let Some(p) = pict.paintable() else {
             return;
