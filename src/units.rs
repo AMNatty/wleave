@@ -1,4 +1,3 @@
-use either::Either;
 use miette::miette;
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
@@ -82,6 +81,13 @@ pub enum LengthValue {
     Percentage(f32),
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum LengthSerialized {
+    Number(f32),
+    String(String),
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum LengthDimension {
     Vertical,
@@ -99,9 +105,9 @@ impl<'de> Deserialize<'de> for LengthValue {
     where
         D: Deserializer<'de>,
     {
-        match Either::<f32, String>::deserialize(deserializer)? {
-            Either::Left(num) => Ok(LengthValue::Px(num)),
-            Either::Right(val) => val.parse().map_err(serde::de::Error::custom),
+        match LengthSerialized::deserialize(deserializer)? {
+            LengthSerialized::Number(num) => Ok(LengthValue::Px(num)),
+            LengthSerialized::String(val) => val.parse().map_err(serde::de::Error::custom),
         }
     }
 }
@@ -158,6 +164,7 @@ impl FromStr for LengthValue {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(transparent)]
 pub struct Margin(pub LengthValue);
 
 impl FromStr for Margin {

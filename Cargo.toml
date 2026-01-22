@@ -17,8 +17,6 @@ miette = { version = "7", features = ["derive", "fancy"] }
 
 cfg-if = "1"
 
-either = { version = "1", features = ["serde"] }
-
 convert_case = "0.10"
 
 dirs = "6.0"
