@@ -68,7 +68,7 @@ From `man 5 wleave.json`, the allowed top-level options are:
   of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)
 * `"column-spacing": "8px"` **(number / "#px" / "#%")** Set space between buttons columns
 * `"row-spacing": "8px"` **(number / "#px" / "#%")** Set space between buttons rows
-* `"margin": "10%"` **(number / "#px" / "#%")** Set margin on all sides
+* `"margin": "20%"` **(number / "#px" / "#%")** Set margin on all sides
 * `"margin-left"` **(number / "#px" / "#%")** Set margin for left of buttons. Falls back to the value set by *margin*
 * `"margin-right"` **(number / "#px" / "#%")** Set margin for right of buttons. Falls back to the value set by
   *margin*

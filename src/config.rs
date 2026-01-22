@@ -72,7 +72,7 @@ impl Default for AppConfig {
 }
 
 fn default_margin() -> Margin {
-    Margin(LengthValue::Percentage(0.1))
+    Margin(LengthValue::Percentage(0.2))
 }
 
 fn default_spacing() -> LengthValue {

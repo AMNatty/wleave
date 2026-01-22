@@ -38,7 +38,7 @@ Button layout is specified in the extra *"button"* field.
 
 *"margin"*: <number / "<number>px" / "<number>%">
 	Set margin on all sides ++
-*Default*: "10%" (of window size)
+*Default*: "20%" (of window size)
 
 *"margin-left"* <number / "<number>px" / "<number>%">
 	Set margin for left of buttons ++
