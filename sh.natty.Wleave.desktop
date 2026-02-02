@@ -1,5 +1,6 @@
 [Desktop Entry]
-Version=0.7.2
+# The version of the Desktop Entry spec, not of the application:
+Version=1.0
 Type=Application
 Name=Wleave
 Comment=Open a system log-out menu
@@ -7,4 +8,4 @@ Icon=wleave
 Exec=wleave
 Terminal=false
 StartupNotify=false
-Categories=Application;
+Categories=System;
