@@ -2635,7 +2635,7 @@ checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
 
 [[package]]
 name = "wleave"
-version = "0.7.0"
+version = "0.7.2"
 dependencies = [
  "cairo-rs",
  "cfg-if",
