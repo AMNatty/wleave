@@ -25,12 +25,11 @@ button label.keybind {
     font-family: monospace;
 }
 
-button:hover label.keybind, button:focus label.keybind {
+button:focus label.keybind {
     opacity: 1;
 }
 
-button:focus,
-button:hover {
+button:focus {
     background-color: color-mix(in srgb, var(--accent-bg-color), var(--view-bg-color));
 }
 
