@@ -7,14 +7,14 @@ mod layout;
 mod paintable;
 
 use clap::Parser;
-use glib::clone;
+use glib::{clone, object::Cast};
 use std::sync::Arc;
 use tracing::{Level, error};
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use crate::app::create_app;
+use crate::app::{create_app, window::WleaveWindow};
 use crate::config::{AppConfig, load_config, load_css, merge_with_args};
 use gtk4::gdk::Display;
 use gtk4::prelude::*;
@@ -56,6 +56,16 @@ fn entry_point(config: Arc<AppConfig>) -> miette::Result<()> {
 
     app.connect_activate(move |app| {
         let _ = &hold_guard;
+
+        if config.service
+            && let Some(app_window) = app
+                .windows()
+                .into_iter()
+                .find_map(|window| window.downcast::<WleaveWindow>().ok())
+        {
+            app_window.present();
+            return;
+        }
 
         let app_window = create_app(&config, app);
         app_window.present();

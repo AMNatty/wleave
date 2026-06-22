@@ -10,7 +10,7 @@ use glib::object::Cast;
 use glib::timeout_add_local_once;
 use glib_macros::{clone, closure};
 use gtk4::prelude::{BoxExt, ButtonExt, GObjectPropertyExpressionExt, GtkWindowExt, WidgetExt};
-use gtk4::{EventControllerKey, GestureClick, PropagationPhase};
+use gtk4::{EventControllerKey, EventControllerMotion, GestureClick, PropagationPhase};
 use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use libadwaita::prelude::AdwApplicationWindowExt;
 use std::sync::Arc;
@@ -18,8 +18,12 @@ use std::time::Duration;
 use wleave::cli_opt::{ButtonLayout, Protocol};
 use wleave::units::{AspectRatio, LengthArgs, LengthDimension};
 
-fn do_exit(window: &WleaveWindow, _service_mode: bool) {
-    window.close();
+fn do_exit(window: &WleaveWindow, service_mode: bool) {
+    if service_mode {
+        window.set_visible(false);
+    } else {
+        window.close();
+    }
 }
 
 fn on_option(
@@ -34,27 +38,15 @@ fn on_option(
 
     let command = command.clone();
 
-    window.connect_hide(clone!(
-        #[strong]
-        command,
-        move |window| {
-            timeout_add_local_once(
-                Duration::from_millis(delay_ms.into()),
-                clone!(
-                    #[strong]
-                    command,
-                    #[weak_allow_none]
-                    window,
-                    move || {
-                        run_command(command);
-                        window.inspect(move |w| do_exit(w, service_mode));
-                    }
-                ),
-            );
-        }
-    ));
-
     window.set_visible(false);
+
+    timeout_add_local_once(Duration::from_millis(delay_ms.into()), move || {
+        run_command(command);
+
+        if !service_mode {
+            do_exit(&window, service_mode);
+        }
+    });
 }
 
 fn handle_key(
@@ -271,6 +263,16 @@ pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> Wle
             .vexpand(true)
             .cursor(&gdk4::Cursor::from_name("pointer", None).expect("pointer cursor not found"))
             .build();
+
+        let motion_controller = EventControllerMotion::new();
+        motion_controller.connect_enter(clone!(
+            #[weak]
+            button,
+            move |_, _, _| {
+                button.grab_focus();
+            }
+        ));
+        button.add_controller(motion_controller);
 
         let overlay = gtk4::Overlay::builder().vexpand(true).hexpand(true).build();
 
