@@ -257,6 +257,7 @@ pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> Wle
         ))
         .build();
 
+    let mut default_button = None;
     for bttn in config.buttons.iter() {
         let justify = match bttn.justify {
             WButtonJustify::Center => gtk4::Justification::Center,
@@ -272,6 +273,10 @@ pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> Wle
             .cursor(&gdk4::Cursor::from_name("pointer", None).expect("pointer cursor not found"))
             .build();
 
+        if config.default_button.as_ref() == Some(&bttn.label) {
+            default_button = Some(button.clone());
+        }
+        
         let overlay = gtk4::Overlay::builder().vexpand(true).hexpand(true).build();
 
         if config.show_keybinds {
@@ -343,9 +348,17 @@ pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> Wle
 
         buttons_container.append(&button);
     }
-
     container_box.set_shrink_center_last(false);
     container_box.set_center_widget(Some(&buttons_container));
+
+    if let Some(btn) = default_button {
+        btn.grab_focus();
+    } else{
+        let window = window.clone();
+        glib::idle_add_local_once(move || {
+            window.set_focus(None::<&gtk4::Widget>);
+        });
+    }
 
     if !config.no_version_info {
         let version_info = gtk4::Label::builder()

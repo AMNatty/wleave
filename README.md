@@ -64,6 +64,7 @@ From `man 5 wleave.json`, the allowed top-level options are:
   cost of running in the background
 * `"button-layout": "grid"` Specify the way buttons should be laid out.
   See [dynamic layouts](#dynamic-layouts-supsince-070sup) for more details.
+* `"default-button"` **(string)** - Specify the label of the button to focus by default
 * `"buttons-per-row": "3"` **(string)** Set the number of buttons per row, or use a fraction to specify the number
   of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)
 * `"column-spacing": "8px"` **(number / "#px" / "#%")** Set space between buttons columns
@@ -95,6 +96,7 @@ The command-line option counterparts of these options take precedence over the c
     "delay-command-ms": 100,
     "close-on-lost-focus": true,
     "show-keybinds": true,
+    "default-button": "lock",
     "buttons": [
         {
             "label": "lock",

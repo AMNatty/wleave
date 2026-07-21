@@ -18,6 +18,9 @@ wleave - A Wayland logout menu
 
 *--button-layout* "grid"
 	Specify the way buttons should be laid out, "grid" being the default. Currently, only "grid" is supported.
+	
+*-D, --default-button* <button_label>
+	Specify the label of the button to focus by default
 
 *-S, --service*
 	Run the application as a service, with all instances of wleave opening this one. Allows faster startup at the cost of running in the background.

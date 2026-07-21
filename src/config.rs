@@ -19,6 +19,7 @@ pub struct AppConfig {
     pub service: bool,
     #[serde(default)]
     pub button_layout: MenuLayoutStrategy,
+    pub default_button: Option<String>,
     pub margin_left: Option<Margin>,
     pub margin_right: Option<Margin>,
     pub margin_top: Option<Margin>,
@@ -51,6 +52,7 @@ impl Default for AppConfig {
         AppConfig {
             service: false,
             button_layout: MenuLayoutStrategy::Grid,
+            default_button: None,
             margin_left: None,
             margin_right: None,
             margin_top: None,
@@ -224,6 +226,7 @@ macro_rules! merge_option {
 pub fn merge_with_args(config: &mut AppConfig, args: Args) {
     merge_option!(config, args, service);
     merge_option!(config, args, button_layout);
+    merge_option!(config, args, default_button => Some(default_button));
     merge_option!(config, args, margin_top => Some(margin_top));
     merge_option!(config, args, margin_bottom => Some(margin_bottom));
     merge_option!(config, args, margin_left => Some(margin_left));
