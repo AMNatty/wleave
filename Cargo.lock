@@ -2079,6 +2079,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
+name = "subst"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a9a86e5144f63c2d18334698269a8bfae6eece345c70b64821ea5b35054ec99"
+dependencies = [
+ "memchr",
+ "unicode-width 0.1.14",
+]
+
+[[package]]
 name = "supports-color"
 version = "3.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2635,7 +2645,7 @@ checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
 
 [[package]]
 name = "wleave"
-version = "0.7.2"
+version = "0.8.0"
 dependencies = [
  "cairo-rs",
  "cfg-if",
@@ -2653,6 +2663,7 @@ dependencies = [
  "miette",
  "serde",
  "serde_json",
+ "subst",
  "thiserror",
  "tracing",
  "tracing-subscriber",

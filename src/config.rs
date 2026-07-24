@@ -43,7 +43,7 @@ pub struct AppConfig {
     pub show_keybinds: bool,
     #[serde(default)]
     pub no_version_info: bool,
-    pub css: Option<PathBuf>,
+    pub css: Option<String>,
 }
 
 impl Default for AppConfig {
@@ -171,22 +171,26 @@ fn parse_config(input: impl Read, source_path: Cow<Path>) -> Result<AppConfig, W
     }
 }
 
-pub fn load_config(file: Option<&impl AsRef<Path>>) -> Result<AppConfig, WError> {
-    if let Some("-") = file.map(AsRef::as_ref).and_then(Path::to_str) {
+pub fn load_config(file: Option<&str>) -> Result<AppConfig, WError> {
+    if matches!(file, Some("-")) {
         return parse_config(std::io::stdin(), Path::new("<stdin>").into());
     }
 
-    let file_path = file.map(file_search_given).unwrap_or_else(|| {
-        file_search_path("layout.json").or_else(|_| file_search_path("layout"))
-    })?;
+    let file_path = file
+        .and_then(shell_substite_as_path)
+        .map(file_search_given)
+        .unwrap_or_else(|| {
+            file_search_path("layout.json").or_else(|_| file_search_path("layout"))
+        })?;
 
     let input =
         std::fs::File::open(&file_path).map_err(|e| WError::IoError(file_path.clone(), e))?;
     parse_config(input, file_path.into())
 }
 
-pub fn load_css(file: Option<impl AsRef<Path>>) -> Result<CssProvider, WError> {
+pub fn load_css(file: Option<&str>) -> Result<CssProvider, WError> {
     let path = file
+        .and_then(shell_substite_as_path)
         .map(file_search_given)
         .unwrap_or_else(|| file_search_path("style.css"))?;
 
@@ -221,6 +225,22 @@ macro_rules! merge_option {
     };
 }
 
+pub fn shell_substite(val: &str) -> Option<String> {
+    subst::substitute(val, &subst::Env)
+        .inspect_err(|e| warn!("Failed to substitue shell variables in '{}': {}", val, e))
+        .ok()
+}
+
+fn shell_substite_as_path(val: &str) -> Option<PathBuf> {
+    shell_substite(val).and_then(|v| {
+        v.parse()
+            .inspect_err(|e| {
+                warn!("Failed to parse path: {}", e);
+            })
+            .ok()
+    })
+}
+
 pub fn merge_with_args(config: &mut AppConfig, args: Args) {
     merge_option!(config, args, service);
     merge_option!(config, args, button_layout);
@@ -238,17 +258,5 @@ pub fn merge_with_args(config: &mut AppConfig, args: Args) {
     merge_option!(config, args, buttons_per_row);
     merge_option!(config, args, no_version_info);
     merge_option!(config, args, delay_command_ms);
-
-    if let Some(css) = args.css.clone() {
-        info!(
-            "\"css\" file specified from args: {:?}",
-            Path::display(&css)
-        );
-        config.css = Some(css);
-    } else {
-        info!(
-            "\"css\" file specified from config: {:?}",
-            config.css.as_deref().map(Path::display)
-        );
-    }
+    merge_option!(config, args, css => Some(css));
 }

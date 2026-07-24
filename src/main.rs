@@ -23,7 +23,7 @@ use wleave::cli_opt::Args;
 fn on_startup(config: &AppConfig) {
     let display = Display::default().expect("Could not connect to a display");
 
-    match load_css(config.css.as_ref()) {
+    match load_css(config.css.as_deref()) {
         Ok(css) => gtk4::style_context_add_provider_for_display(
             &display,
             &css,
@@ -78,7 +78,7 @@ fn main() -> miette::Result<()> {
 
     let args = Args::parse();
 
-    let mut config = load_config(args.layout.as_ref())?;
+    let mut config = load_config(args.layout.as_deref())?;
     merge_with_args(&mut config, args);
 
     let config = Arc::new(config);

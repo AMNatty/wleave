@@ -16,7 +16,7 @@ Button layout is specified in the extra *"button"* field.
 	Specify the way buttons should be laid out, "grid" being the default. Currently, only "grid" is supported.
 
 *"css"*: <string>
-	Specify a custom CSS file instead of the default one
+	Specify a custom CSS file instead of the default one. Shell variables are expanded.
 
 *"service"*: <boolean>
 	Run the application as a service, with all instances of wleave opening this one. Allows faster startup at the
@@ -88,7 +88,7 @@ wleave buttons may have the following properties:
 - *"action"* (command string or object or list thereof) - the action that will be executed via shell upon pressing the button
 - *"text"* (string) - the visible label text of the button
 - *"keybind"* (string) - a GTK key name associated with the button
-- *"icon"* (path string) - filename to load an icon image from
+- *"icon"* (path string) - filename to load an icon image from (expands shell variables)
 - *"height"* (*optional*, number) - value in the range 0.0 to 1.0 to override the placement of the label in the button
 - *"width"* (*optional*, number) - value in the range 0.0 to 1.0 to override the placement of the label in the button
 - *"circular"* (*optional*, boolean, default false)

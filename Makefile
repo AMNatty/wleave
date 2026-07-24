@@ -15,3 +15,7 @@ all: wleave
 .PHONY: clean
 clean:
 	rm -rf ./target ./completions_generated
+
+.PHONY: format-docs
+format-docs:
+	remark README.md --output

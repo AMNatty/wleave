@@ -1,10 +1,10 @@
 [package]
 name = "wleave"
-version = "0.7.2"
+version = "0.8.0"
 edition = "2024"
-license = "MIT"
 description = "A Wayland layer-shell logout prompt written in GTK"
 repository = "https://github.com/AMNatty/wleave"
+license = "MIT"
 
 [workspace]
 members = [".", "completions_gen"]
@@ -12,22 +12,24 @@ members = [".", "completions_gen"]
 [dependencies]
 clap = { version = "4.1", features = ["derive"] }
 
-thiserror = "2"
 miette = { version = "7", features = ["derive", "fancy"] }
+thiserror = "2"
 
 cfg-if = "1"
 
 convert_case = "0.10"
 
-dirs = "6.0"
 cairo-rs = "0.21"
+gdk4 = { version = "0.10", features = ["v4_18"] }
 glib = "0.21"
 glib-macros = "0.21"
-libadwaita = { version = "0.8", features = ["v1_7"] }
-librsvg = "2.61"
-gdk4 = { version = "0.10", features = ["v4_18"] }
 gtk4 = { version = "0.10", features = ["gnome_45"] }
 gtk4-layer-shell = "0.7"
+libadwaita = { version = "0.8", features = ["v1_7"] }
+librsvg = "2.61"
+
+dirs = "6"
+subst = "0.3"
 which = "8"
 
 cssparser = "0.36"

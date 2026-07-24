@@ -24,11 +24,11 @@ paru -S wleave-git
 
 Dependencies:
 
-- gtk4-layer-shell
-- gtk4
-- librsvg (for SVG images)
-- libadwaita
-- a stable version of the Rust toolchain
+* gtk4-layer-shell
+* gtk4
+* librsvg (for SVG images)
+* libadwaita
+* a stable version of the Rust toolchain
 
 You can run the application using `cargo run --release` or GNU make:
 
@@ -58,7 +58,7 @@ arguments.
 From `man 5 wleave.json`, the allowed top-level options are:
 
 * `"buttons"` **(array)** - a list of buttons
-* `"css"` **(string)** - Specify a custom CSS file instead of the default one
+* `"css"` **(string)** - Specify a custom CSS file instead of the default one (expands shell variables<sup>since 0.8.0</sup>)
 * `"service": false` **(boolean)**
   Run the application as a service, with all instances of wleave opening this one. Allows faster startup at the
   cost of running in the background
@@ -85,6 +85,8 @@ From `man 5 wleave.json`, the allowed top-level options are:
   command is executed
 
 The command-line option counterparts of these options take precedence over the configuration file.
+
+Icon paths are shell expanded (<sup>since 0.8.0</sup>)
 
 *Example configuration* with one button that executes `swaylock` on click:
 
@@ -215,7 +217,8 @@ button label.keybind {
     font-family: monospace;
 }
 
-button:hover label.keybind, button:focus label.keybind {
+button:hover label.keybind,
+button:focus label.keybind {
     opacity: 1;
 }
 
@@ -229,7 +232,6 @@ button:active {
     color: var(--accent-fg-color);
     background-color: var(--accent-bg-color);
 }
-
 ```
 
 ## Keybinds reference
@@ -238,16 +240,16 @@ See <https://gitlab.gnome.org/GNOME/gtk/-/blob/4.18.0/gdk/keynames.txt> for a li
 
 ## Enhancements
 
-- A desktop file <sup>since 0.7</sup>
-- Conditionally pick different actions on different desktop environments <sup>since 0.7</sup>
-- SVG icons can be colorized via CSS `color` <sup>since 0.6</sup>
-- Libadwaita accent colors <sup>since 0.6</sup>
-- Automatic light theme by default <sup>since 0.6</sup>
-- Natively GTK4 <sup>since 0.5</sup>
-- New pretty icons by [@earth-walker](https://github.com/earth-walker)
-- Autoclose when window focus is lost (the `-f/--close-on-lost-focus` flag)
-- Mnemonic labels (the `-k/--show-keybinds` flag)
-- Pretty gaps by default
-- Less error-prone
-- Keybinds accept modifier keys and Unicode characters
-- Easier to extend
+* A desktop file <sup>since 0.7</sup>
+* Conditionally pick different actions on different desktop environments <sup>since 0.7</sup>
+* SVG icons can be colorized via CSS `color` <sup>since 0.6</sup>
+* Libadwaita accent colors <sup>since 0.6</sup>
+* Automatic light theme by default <sup>since 0.6</sup>
+* Natively GTK4 <sup>since 0.5</sup>
+* New pretty icons by [@earth-walker](https://github.com/earth-walker)
+* Autoclose when window focus is lost (the `-f/--close-on-lost-focus` flag)
+* Mnemonic labels (the `-k/--show-keybinds` flag)
+* Pretty gaps by default
+* Less error-prone
+* Keybinds accept modifier keys and Unicode characters
+* Easier to extend

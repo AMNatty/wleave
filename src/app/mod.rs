@@ -2,14 +2,16 @@ pub mod window;
 
 use crate::app::window::WleaveWindow;
 use crate::button::{WButton, WButtonActionList, WButtonJustify};
-use crate::config::AppConfig;
+use crate::config::{AppConfig, shell_substite};
 use crate::exec::run_command;
 use crate::layout::MenuLayout;
 use crate::paintable::svg_picture_colorized;
 use glib::object::Cast;
 use glib::timeout_add_local_once;
 use glib_macros::{clone, closure};
-use gtk4::prelude::{BoxExt, ButtonExt, EventControllerExt, GObjectPropertyExpressionExt, GtkWindowExt, WidgetExt};
+use gtk4::prelude::{
+    BoxExt, ButtonExt, EventControllerExt, GObjectPropertyExpressionExt, GtkWindowExt, WidgetExt,
+};
 use gtk4::{EventControllerKey, GestureClick, PropagationPhase};
 use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use libadwaita::prelude::AdwApplicationWindowExt;
@@ -290,7 +292,7 @@ pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> Wle
             .valign(gtk4::Align::Center)
             .build();
 
-        let picture = if let Some(icon) = &bttn.icon {
+        let picture = if let Some(icon) = &bttn.icon.as_deref().and_then(shell_substite) {
             let picture = if icon.ends_with(".svg") {
                 svg_picture_colorized(icon).upcast()
             } else {
@@ -340,17 +342,13 @@ pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> Wle
         ));
 
         let event_controller_motion = gtk4::EventControllerMotion::new();
-        event_controller_motion.connect_enter(
-            |controller, _x, _y| {
-                let control_button = controller.widget();
-                match control_button {
-                    Some(control_button) => {
-                        control_button.grab_focus();
-                    }
-                    None => { }
-                }
-            }
-        );
+        event_controller_motion.connect_enter(|controller, _x, _y| {
+            let Some(control_button) = controller.widget() else {
+                return;
+            };
+
+            control_button.grab_focus();
+        });
         button.add_controller(event_controller_motion);
 
         button.set_child(Some(&overlay));

@@ -5,7 +5,6 @@ use std::{
     error::Error,
     fmt::{Debug, Display},
     num::NonZeroU32,
-    path::PathBuf,
     str::FromStr,
 };
 
@@ -32,13 +31,18 @@ pub struct Args {
     pub version: Option<bool>,
 
     /// Run the application in service mode - it will stay in the background until triggered
-    #[arg(short = 's', long, num_args = 0..=1, require_equals = true, default_missing_value = "true"
+    #[arg(
+        short = 's',
+        long,
+        num_args = 0..=1,
+        require_equals = true,
+        default_missing_value = "true"
     )]
     pub service: Option<bool>,
 
     /// Specify a layout file, specifying - will read the layout config from stdin
     #[arg(short = 'l', long)]
-    pub layout: Option<PathBuf>,
+    pub layout: Option<String>,
 
     /// Specify the way the buttons should be laid out in the available space
     #[arg(long)]
@@ -46,7 +50,7 @@ pub struct Args {
 
     /// Specify a custom CSS file
     #[arg(short = 'C', long)]
-    pub css: Option<PathBuf>,
+    pub css: Option<String>,
 
     /// Set the number of buttons per row, or use a fraction to specify the number of rows to be
     /// used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)
@@ -104,7 +108,12 @@ pub struct Args {
     pub protocol: Option<Protocol>,
 
     /// Hide version information
-    #[arg(short = 'x', long, num_args = 0..=1, require_equals = true, default_missing_value = "true"
+    #[arg(
+        short = 'x',
+        long,
+        num_args = 0..=1,
+        require_equals = true,
+        default_missing_value = "true"
     )]
     pub no_version_info: Option<bool>,
 }

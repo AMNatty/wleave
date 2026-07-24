@@ -3,7 +3,6 @@
  * Or use your own colors. Both work, but using your own colors may break the automatic light/dark theme function.
  */
 
-
 window {
     background-color: rgba(12, 12, 12, 0.8);
 }
@@ -25,7 +24,8 @@ button label.keybind {
     font-family: monospace;
 }
 
-button:hover label.keybind, button:focus label.keybind {
+button:hover label.keybind,
+button:focus label.keybind {
     opacity: 1;
 }
 
