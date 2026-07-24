@@ -44,6 +44,10 @@ pub struct Args {
     #[arg(long)]
     pub button_layout: Option<MenuLayoutStrategy>,
 
+    /// Specify the label of the button to focus by default
+    #[arg(short = 'D', long)]
+    pub default_button: Option<String>,
+
     /// Specify a custom CSS file
     #[arg(short = 'C', long)]
     pub css: Option<PathBuf>,

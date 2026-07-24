@@ -2,6 +2,7 @@ complete -c wleave -s s -l service -d 'Run the application in service mode - it 
 false\t''"
 complete -c wleave -s l -l layout -d 'Specify a layout file, specifying - will read the layout config from stdin' -r -F
 complete -c wleave -l button-layout -d 'Specify the way the buttons should be laid out in the available space' -r -f -a "grid\t''"
+complete -c wleave -s D -l default-button -d 'Specify the default button to focus' -r
 complete -c wleave -s C -l css -d 'Specify a custom CSS file' -r -F
 complete -c wleave -s b -l buttons-per-row -d 'Set the number of buttons per row, or use a fraction to specify the number of rows to be used (e.g. "1/1" for all buttons in a single row, "1/5" to distribute the buttons over 5 rows)' -r
 complete -c wleave -s c -l column-spacing -d 'Set space between buttons columns' -r

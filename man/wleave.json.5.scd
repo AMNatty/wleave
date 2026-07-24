@@ -15,6 +15,9 @@ Button layout is specified in the extra *"button"* field.
 *"button-layout"*: <*"grid"*>
 	Specify the way buttons should be laid out, "grid" being the default. Currently, only "grid" is supported.
 
+*"default-button"*: <string>
+    Specify the label of the button to focus by default
+
 *"css"*: <string>
 	Specify a custom CSS file instead of the default one
 
