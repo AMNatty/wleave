@@ -1,5 +1,6 @@
 use crate::layout::menu_layout::LayoutMenuImpl;
 use crate::layout::menu_layout_child::MenuLayoutChildImpl;
+use glam::{DVec2, USizeVec2};
 use glib::object::Cast;
 use glib::subclass::types::ObjectSubclassIsExt;
 use gtk4::prelude::{LayoutManagerExt, WidgetExt};
@@ -244,93 +245,73 @@ impl MenuLayoutProvider {
         match self.strategy {
             MenuLayoutStrategy::Grid => {
                 let n = children.len();
-                let col_spacing = (self.column_spacing as i32).max(0) as usize;
-                let row_spacing = (self.row_spacing as i32).max(0) as usize;
+                let spacing = USizeVec2::new(
+                    (self.column_spacing as i32).max(0) as usize,
+                    (self.row_spacing as i32).max(0) as usize,
+                );
 
-                let mut rows = 1;
-                let mut cols = 1;
-                let mut b_width = 0.0;
-                let mut b_height = 0.0;
-
-                let u_width = width as usize;
-                let u_height = height as usize;
+                let available_box = glam::USizeVec2::new(width as usize, height as usize);
 
                 let per_row = obj.buttons_per_row() as usize;
-                // We use 0 for "auto" placement
-                let cols_range = if per_row != 0 {
-                    // Try layouts where all buttons either fit into one row or exactly "per_row"
-                    per_row.min(n)..=per_row
-                } else {
-                    // Try all possible layouts
-                    1..=n
-                };
 
-                // Axis-aligned rectangle packing
-                // We brute-force the best layout, optimizing for max button area
-                for i_rows in 1..=n {
-                    for j_cols in cols_range.clone() {
-                        if (i_rows * j_cols > n + i_rows || i_rows * j_cols > n + j_cols)
-                            && per_row == 0
-                            || i_rows * j_cols < n
-                        {
-                            continue;
+                let mut best_grid = glam::USizeVec2::new(n, 1);
+                let mut best_box = glam::USizeVec2::ZERO;
+                let epsilon = 1e-2;
+                let bounds = available_box.as_dvec2();
+                let spacing_d = spacing.as_dvec2();
+                let aspect_fac = self
+                    .aspect_ratio
+                    .map(|aspect| glam::DVec2::new(aspect, 1.0));
+
+                match (aspect_fac, per_row) {
+                    (Some(aspect), 0) => {
+                        let mut best_height = 0.0;
+
+                        for cols in 1..=n {
+                            let cells_u = USizeVec2::new(cols, n.div_ceil(cols));
+                            let cells = cells_u.as_dvec2();
+                            let space_per_box = (bounds - (cells - DVec2::ONE) * spacing_d) / cells;
+                            let box_height = (space_per_box / aspect).x.min(space_per_box.y);
+
+                            if box_height > best_height + epsilon {
+                                best_height = box_height;
+                                best_grid = cells_u;
+                                best_box = (glam::DVec2::splat(box_height) * aspect).as_usizevec2();
+                            }
                         }
+                    }
+                    (None, 0) => {
+                        let mut max_area = 0.0;
 
-                        let col_gaps = j_cols - 1;
-                        let row_gaps = i_rows - 1;
+                        for cols in 1..=n {
+                            let cells_u = USizeVec2::new(cols, n.div_ceil(cols));
+                            let cells = cells_u.as_dvec2();
+                            let space_per_box = (bounds - (cells - DVec2::ONE) * spacing_d) / cells;
+                            let area = space_per_box.element_product();
 
-                        let (w, h) = match self.aspect_ratio {
-                            Some(aspect @ 1.0..) => {
-                                let mut w = u_width.saturating_sub(col_gaps * col_spacing) as f64
-                                    / j_cols as f64
-                                    * aspect;
-                                let h = (u_height.saturating_sub(row_gaps * row_spacing) as f64
-                                    / i_rows as f64)
-                                    .min(w / aspect);
-
-                                w = h * aspect;
-
-                                (w, h)
+                            if area > max_area + epsilon {
+                                max_area = area;
+                                best_grid = cells_u;
+                                best_box = space_per_box.as_usizevec2();
                             }
-                            Some(aspect @ ..1.0) => {
-                                let mut h = u_height.saturating_sub(row_gaps * row_spacing) as f64
-                                    / i_rows as f64;
-                                let w = (u_width.saturating_sub(col_gaps * col_spacing) as f64
-                                    / j_cols as f64
-                                    * aspect)
-                                    .min(h * aspect);
-
-                                h = w / aspect;
-
-                                (w, h)
-                            }
-                            //
-                            Some(..) | None => {
-                                let w = u_width.saturating_sub(col_gaps * col_spacing) as f64
-                                    / j_cols as f64;
-                                let h = u_height.saturating_sub(row_gaps * row_spacing) as f64
-                                    / i_rows as f64;
-
-                                (w, h)
-                            }
-                        };
-
-                        if w * h > b_width * b_height {
-                            rows = i_rows;
-                            cols = j_cols;
-                            b_width = w;
-                            b_height = h;
                         }
+                    }
+                    (Some(aspect), per_row) => {
+                        best_grid = glam::USizeVec2::new(per_row.min(n), n.div_ceil(per_row));
+                        let cells = best_grid.as_dvec2();
+                        let space_per_box = (bounds - (cells - DVec2::ONE) * spacing_d) / cells;
+                        let box_height = (space_per_box / aspect).x.min(space_per_box.y);
+                        best_box = (glam::DVec2::splat(box_height) * aspect).as_usizevec2();
+                    }
+                    (None, per_row) => {
+                        best_grid = glam::USizeVec2::new(per_row.min(n), n.div_ceil(per_row));
+                        best_box =
+                            (available_box - (best_grid - USizeVec2::ONE) * spacing) / best_grid;
                     }
                 }
 
-                let base_x =
-                    (width as f64 - (cols - 1) as f64 * (col_spacing as f64 + b_width) - b_width)
-                        / 2.0;
-                let base_y = (height as f64
-                    - (rows - 1) as f64 * (row_spacing as f64 + b_height)
-                    - b_height)
-                    / 2.0;
+                let used_box = best_grid * (spacing + best_box) - spacing;
+                let base_point = (available_box - used_box) / 2;
 
                 for (i, child) in children.iter().enumerate() {
                     let child_layout = obj
@@ -339,27 +320,20 @@ impl MenuLayoutProvider {
                         .expect("always MenuLayoutChild");
 
                     if child.should_layout() {
-                        let ix = i % cols;
-                        let iy = i / cols;
+                        let grid_pos = USizeVec2::new(i % best_grid.x, i / best_grid.x);
 
                         child_layout.set_placement(MenuLayoutChildPlacement::Grid);
-                        child_layout.set_grid_x(ix as u32);
-                        child_layout.set_grid_y(iy as u32);
+                        child_layout.set_grid_x(grid_pos.x as u32);
+                        child_layout.set_grid_y(grid_pos.y as u32);
 
-                        let x_grid = ix as f64;
-                        let y_grid = iy as f64;
-
-                        let x = base_x
-                            + x_grid * b_width
-                            + x_grid * self.column_spacing * self.aspect_ratio.unwrap_or(1.0);
-                        let y = base_y + y_grid * b_height + y_grid * self.row_spacing;
+                        let pos = base_point + grid_pos * (best_box + spacing);
 
                         child.size_allocate(
                             &gtk4::Allocation::new(
-                                x as i32,
-                                y as i32,
-                                b_width as i32,
-                                b_height as i32,
+                                pos.x as i32,
+                                pos.y as i32,
+                                best_box.x as i32,
+                                best_box.y as i32,
                             ),
                             baseline,
                         );

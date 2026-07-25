@@ -727,6 +727,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.33.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f22fb22f065b308be0d8724e3706c7fa3fc2a6c7d6899df4cad7860e7a75436"
+
+[[package]]
 name = "glib"
 version = "0.21.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2654,6 +2660,7 @@ dependencies = [
  "cssparser 0.36.0",
  "dirs",
  "gdk4",
+ "glam",
  "glib",
  "glib-macros",
  "gtk4",
