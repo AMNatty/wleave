@@ -103,11 +103,14 @@ Icon paths are shell expanded (<sup>since 0.8.0</sup>)
             "action": "swaylock",
             "text": "Lock",
             "keybind": "l",
+            "keybind-label": "%S",
             "icon": "/usr/share/wleave/icons/lock.svg"
         }
     ]
 }
 ```
+
+By default, the button keybind label is set to the `keybind` value. The text of the label can be configured<sup>since 0.8.0</sup> with `keybind-label`, optionally formatting the `keybind` value with `%s` (or `%S` for uppercase).
 
 Layout files may also be read from *stdin* with `--layout -`.
 For example, with `jq`, buttons can be picked out:
@@ -208,10 +211,12 @@ button {
     padding: 10px;
 }
 
+/** The button's label */
 button label.action-name {
     font-size: 24px;
 }
 
+/** The keyboard shortcut label for each of the labels */
 button label.keybind {
     font-size: 20px;
     font-family: monospace;

@@ -199,11 +199,13 @@ impl FromStr for WButtonJustify {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct WButton {
     pub label: String,
     pub action: WButtonActionList,
     pub text: String,
     pub keybind: String,
+    pub keybind_label: Option<String>,
     #[serde(default)]
     pub justify: WButtonJustify,
     pub width: Option<f32>,

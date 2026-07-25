@@ -277,8 +277,22 @@ pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> Wle
         let overlay = gtk4::Overlay::builder().vexpand(true).hexpand(true).build();
 
         if config.show_keybinds {
+            let label_text = bttn
+                .keybind_label
+                .as_deref()
+                .map(|l| l.replace("%S", &bttn.keybind.to_uppercase()))
+                .map(|l| l.replace("%s", &bttn.keybind))
+                .unwrap_or_else(|| {
+                    gdk4::Key::from_name(&bttn.keybind)
+                        .as_ref()
+                        .and_then(gdk4::Key::name)
+                        .as_deref()
+                        .unwrap_or(&bttn.keybind)
+                        .to_owned()
+                });
+
             let key_label = gtk4::Label::builder()
-                .label(format!("[{}]", bttn.keybind))
+                .label(label_text)
                 .halign(gtk4::Align::Start)
                 .valign(gtk4::Align::Start)
                 .css_classes(["dimmed", "keybind"])

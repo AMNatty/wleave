@@ -20,8 +20,12 @@ button label.action-name {
 }
 
 button label.keybind {
+    padding: 2px 8px;
+    border-radius: 4px;
     font-size: 20px;
     font-family: monospace;
+    background-color: var(--view-fg-color);
+    color: var(--view-bg-color);
 }
 
 button:hover label.keybind,

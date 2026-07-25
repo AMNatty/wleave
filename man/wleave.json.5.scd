@@ -88,6 +88,7 @@ wleave buttons may have the following properties:
 - *"action"* (command string or object or list thereof) - the action that will be executed via shell upon pressing the button
 - *"text"* (string) - the visible label text of the button
 - *"keybind"* (string) - a GTK key name associated with the button
+- *"keybind-label"* (string) - leave empty to be filled with *keybind*, or format into a string with %s (or %S for uppercase)
 - *"icon"* (path string) - filename to load an icon image from (expands shell variables)
 - *"height"* (*optional*, number) - value in the range 0.0 to 1.0 to override the placement of the label in the button
 - *"width"* (*optional*, number) - value in the range 0.0 to 1.0 to override the placement of the label in the button
