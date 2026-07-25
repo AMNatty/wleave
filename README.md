@@ -87,7 +87,7 @@ From `man 5 wleave.json`, the allowed top-level options are:
 
 The command-line option counterparts of these options take precedence over the configuration file.
 
-Icon paths are shell expanded (<sup>since 0.8.0</sup>)
+Icon paths are shell-expanded. <sup>since 0.8.0</sup>
 
 *Example configuration* with one button that executes `swaylock` on click:
 
