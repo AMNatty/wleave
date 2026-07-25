@@ -1,4 +1,7 @@
 {
+    "button-defaults": {
+        "keybind-label": "%S"
+    },
     "buttons": [
         {
             "label": "lock",
@@ -16,7 +19,6 @@
             ],
             "text": "Lock",
             "keybind": "l",
-            "keybind-label": "%S",
             "icon": "/usr/share/wleave/icons/lock.svg"
         },
         {
@@ -24,7 +26,6 @@
             "action": "systemctl hibernate",
             "text": "Hibernate",
             "keybind": "h",
-            "keybind-label": "%S",
             "icon": "/usr/share/wleave/icons/hibernate.svg"
         },
         {
@@ -50,7 +51,6 @@
             ],
             "text": "Logout",
             "keybind": "e",
-            "keybind-label": "%S",
             "icon": "/usr/share/wleave/icons/logout.svg"
         },
         {
@@ -58,7 +58,6 @@
             "action": "systemctl poweroff",
             "text": "Shutdown",
             "keybind": "s",
-            "keybind-label": "%S",
             "icon": "/usr/share/wleave/icons/shutdown.svg"
         },
         {
@@ -66,7 +65,6 @@
             "action": "systemctl suspend",
             "text": "Suspend",
             "keybind": "u",
-            "keybind-label": "%S",
             "icon": "/usr/share/wleave/icons/suspend.svg"
         },
         {
@@ -74,7 +72,6 @@
             "action": "systemctl reboot",
             "text": "Reboot",
             "keybind": "r",
-            "keybind-label": "%S",
             "icon": "/usr/share/wleave/icons/reboot.svg"
         }
     ]

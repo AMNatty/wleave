@@ -2,6 +2,7 @@ use serde::de::{IntoDeserializer, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 use std::collections::BTreeMap;
 use std::convert::Infallible;
+use std::ops::Deref;
 use std::str::FromStr;
 use tracing::warn;
 
@@ -166,7 +167,7 @@ impl WButtonActionList {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub enum WButtonJustify {
     #[default]
     Center,
@@ -198,6 +199,38 @@ impl FromStr for WButtonJustify {
     }
 }
 
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct WButtonCommon {
+    pub keybind_label: Option<String>,
+    pub justify: Option<WButtonJustify>,
+    pub width: Option<f32>,
+    pub height: Option<f32>,
+    pub circular: Option<bool>,
+    #[serde(default)]
+    pub icon: Option<String>,
+}
+
+macro_rules! merge {
+    (Clone, $to:ident, $from:ident, $field:ident) => {
+        $to.$field = $to.$field.as_ref().or($from.$field.as_ref()).cloned()
+    };
+    (Copy, $to:ident, $from:ident, $field:ident) => {
+        $to.$field = $to.$field.or($from.$field)
+    };
+}
+
+impl WButtonCommon {
+    // Copies over non-empty values to fill in defaults
+    pub fn merge(&mut self, other: &Self) {
+        merge!(Clone, self, other, keybind_label);
+        merge!(Copy, self, other, justify);
+        merge!(Copy, self, other, width);
+        merge!(Copy, self, other, height);
+        merge!(Copy, self, other, circular);
+    }
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct WButton {
@@ -205,17 +238,14 @@ pub struct WButton {
     pub action: WButtonActionList,
     pub text: String,
     pub keybind: String,
-    pub keybind_label: Option<String>,
-    #[serde(default)]
-    pub justify: WButtonJustify,
-    pub width: Option<f32>,
-    pub height: Option<f32>,
-    #[serde(default = "default_circular")]
-    pub circular: bool,
-    #[serde(default)]
-    pub icon: Option<String>,
+    #[serde(flatten)]
+    pub common: WButtonCommon,
 }
 
-fn default_circular() -> bool {
-    false
+impl Deref for WButton {
+    type Target = WButtonCommon;
+
+    fn deref(&self) -> &Self::Target {
+        &self.common
+    }
 }

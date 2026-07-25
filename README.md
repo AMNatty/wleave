@@ -58,6 +58,7 @@ arguments.
 From `man 5 wleave.json`, the allowed top-level options are:
 
 * `"buttons"` **(array)** - a list of buttons
+* `"button-defaults"` **(object)** - provides defaults for optional button properties <sup>since 0.8.0</sup>
 * `"css"` **(string)** - Specify a custom CSS file instead of the default one (expands shell variables<sup>since 0.8.0</sup>)
 * `"service": false` **(boolean)**
   Run the application as a service, with all instances of wleave opening this one. Allows faster startup at the
@@ -97,13 +98,15 @@ Icon paths are shell expanded (<sup>since 0.8.0</sup>)
     "delay-command-ms": 100,
     "close-on-lost-focus": true,
     "show-keybinds": true,
+    "button-defaults": {
+        "keybind-label": "%S"
+    },
     "buttons": [
         {
             "label": "lock",
             "action": "swaylock",
             "text": "Lock",
             "keybind": "l",
-            "keybind-label": "%S",
             "icon": "/usr/share/wleave/icons/lock.svg"
         }
     ]

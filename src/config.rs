@@ -1,4 +1,4 @@
-use crate::button::WButton;
+use crate::button::{WButton, WButtonCommon};
 use crate::error::WError;
 use convert_case::ccase;
 use gdk4::gio;
@@ -44,6 +44,7 @@ pub struct AppConfig {
     #[serde(default)]
     pub no_version_info: bool,
     pub css: Option<String>,
+    pub button_defaults: Option<WButtonCommon>,
 }
 
 impl Default for AppConfig {
@@ -67,6 +68,7 @@ impl Default for AppConfig {
             show_keybinds: false,
             no_version_info: false,
             css: None,
+            button_defaults: None,
         }
     }
 }
@@ -148,8 +150,17 @@ fn parse_config(input: impl Read, source_path: Cow<Path>) -> Result<AppConfig, W
         });
 
     match (new, legacy) {
-        (Ok(conf), _) => {
+        (Ok(mut conf), _) => {
             info!("Using the JSON layout format.");
+
+            let Some(defaults) = &conf.button_defaults else {
+                return Ok(conf);
+            };
+
+            for button in &mut conf.buttons {
+                button.common.merge(defaults);
+            }
+
             Ok(conf)
         }
         (Err(e), Ok(legacy)) => {

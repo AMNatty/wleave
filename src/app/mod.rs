@@ -260,7 +260,7 @@ pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> Wle
         .build();
 
     for bttn in config.buttons.iter() {
-        let justify = match bttn.justify {
+        let justify = match bttn.justify.unwrap_or_default() {
             WButtonJustify::Center => gtk4::Justification::Center,
             WButtonJustify::Fill => gtk4::Justification::Fill,
             WButtonJustify::Left => gtk4::Justification::Left,
@@ -340,7 +340,7 @@ pub fn create_app(config: &Arc<AppConfig>, app: &libadwaita::Application) -> Wle
 
         overlay.set_child(Some(&inner));
 
-        if bttn.circular {
+        if bttn.circular.unwrap_or_default() {
             button.add_css_class("circular");
         }
 
